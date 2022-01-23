@@ -128,3 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 DS807 exam 2022.pdf
+
+# Custom
+archive.zip
+archive/
