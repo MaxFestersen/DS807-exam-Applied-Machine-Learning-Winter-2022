@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Jan 24 11:16:52 2022
+Created on Mon Jan 24 16:42:42 2022
 
 @author: adernild
 """
+
 #%% Importing libraries
 import numpy as np
 import tensorflow as tf
@@ -20,26 +21,26 @@ datagen = ImageDataGenerator(rescale=1/255.0)
 datagen_test = ImageDataGenerator(rescale=1/255.0)
 batch_size = 32
 
-train_gen = datagen.flow_from_directory('data/split/CC/train', 
+train_gen = datagen.flow_from_directory('data/split/D/train', 
                                         batch_size=batch_size,
                                         shuffle=True,
                                         seed=1234,
                                         target_size=(130, 250),
-                                        class_mode='binary')
+                                        class_mode='categorical')
 
-val_gen = datagen.flow_from_directory('data/split/CC/val', 
+val_gen = datagen.flow_from_directory('data/split/D/val', 
                                       batch_size=batch_size,
                                       shuffle=True,
                                       seed=1234,
                                       target_size=(130, 250),
-                                      class_mode='binary')
+                                      class_mode='categorical')
 
-test_gen = datagen.flow_from_directory('data/split/CC/test')
+test_gen = datagen.flow_from_directory('data/split/D/test')
 
 input_shape=(130, 250, 3)
 
 #%%
-modelCC = Sequential([
+modelD = Sequential([
     Conv2D(16, (3,3), activation='relu', input_shape=input_shape, name='conv_1'),
     Conv2D(32, (3,3), activation='relu', name='conv_2'),
     MaxPooling2D(2,2),
@@ -47,38 +48,26 @@ modelCC = Sequential([
     Conv2D(64, (3,3), activation='relu', name='conv_4'),
     Flatten(),
     Dense(128, activation='relu'),
-    Dense(1, activation='sigmoid')
+    Dense(10, activation='softmax')
 ])
 
-METRICS = [
-      tf.keras.metrics.TruePositives(name='tp'),
-      tf.keras.metrics.FalsePositives(name='fp'),
-      tf.keras.metrics.TrueNegatives(name='tn'),
-      tf.keras.metrics.FalseNegatives(name='fn'), 
-      tf.keras.metrics.BinaryAccuracy(name='accuracy'),
-      tf.keras.metrics.Precision(name='precision'),
-      tf.keras.metrics.Recall(name='recall'),
-      tf.keras.metrics.AUC(name='auc'),
-      tf.keras.metrics.AUC(name='prc', curve='PR'), # precision-recall curve
-]
-
-modelCC.compile(
-    loss='binary_crossentropy',
+modelD.compile(
+    loss='categorical_crossentropy',
     optimizer='adam',
-    metrics=METRICS)
+    metrics=['accuracy'])
 
-modelCC.summary()
+modelD.summary()
 
 #%% Callbacks
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="./logs", histogram_freq=0)  # tensorboard --logdir ./logs
 log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
-checkpoint_filepath = './checkpoints/checkpoint-modelCC'
+checkpoint_filepath = './checkpoints/checkpoint-modelD'
 
 modelCheckpoint = ModelCheckpoint(
     filepath=checkpoint_filepath,
     save_weights_only=True,
-    monitor='val_prc',
+    monitor='val_accuracy',
     mode='max',
     save_best_only=True) # Saving best checkpoint
 
@@ -103,7 +92,7 @@ train_class_weights = dict(enumerate(class_weights))
 STEP_SIZE_TRAIN=train_gen.n//train_gen.batch_size
 STEP_SIZE_VALID=val_gen.n//val_gen.batch_size
 
-modelCC.fit(train_gen,
+modelD.fit(train_gen,
             steps_per_epoch=STEP_SIZE_TRAIN,
             validation_data=val_gen,
             validation_steps=STEP_SIZE_VALID,
