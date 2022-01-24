@@ -107,9 +107,24 @@ print(f'Optimized polynomial SVM achieved {round(accuracy_poly_best * 100, 1)}% 
 #todo
 
 #%% Question 1.2 Problem solving: D
+#%% Question 1.2 Problem solving: D SVM
 #todo
 
+#%% Question 1.2 Problem solving: D RF
+#todo
+
+#%% Question 1.2 Problem solving: D B
+#todo
+
+
 #%% Question 1.2 Problem solving: Y
+#%% Question 1.2 Problem solving: Y SVM
+#todo
+
+#%% Question 1.2 Problem solving: Y RF
+#todo
+
+#%% Question 1.2 Problem solving: Y B
 #todo
 
 #%% Question 1.2 Performance
