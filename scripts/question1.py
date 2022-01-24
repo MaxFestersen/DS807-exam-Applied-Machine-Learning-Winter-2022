@@ -12,13 +12,11 @@ import pandas as pd
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-import seaborn as sns
 from skimage.io import imread
 from skimage.transform import resize
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-from sklearn import svm
-
+from sklearn import svm, datasets
+from sklearn.model_selection import GridSearchCV
 
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
