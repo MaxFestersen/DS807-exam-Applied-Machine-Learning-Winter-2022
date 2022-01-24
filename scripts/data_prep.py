@@ -69,4 +69,3 @@ for i in range(0, len(df)):
 splitfolders.ratio("data/CC/", output="data/split/CC/", seed=1337, ratio=(0.8, 0.1, 0.1))
 splitfolders.ratio("data/D/", output="data/split/D/", seed=1337, ratio=(0.8, 0.1, 0.1))
 splitfolders.ratio("data/Y/", output="data/split/Y/", seed=1337, ratio=(0.8, 0.1, 0.1))
-
