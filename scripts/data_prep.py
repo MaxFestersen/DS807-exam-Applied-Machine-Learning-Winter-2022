@@ -25,6 +25,10 @@ df['CC'] = np.select([(df[1]<1900) & (df[1]>1799)], [0], default=1)
 df['D'] = np.select([(df[1].astype(str).str.len()>1) & (df[1].astype(str).str.len()<5)], [df[1].astype(str).str[-2].astype(int)], default=10)
 df['Y'] = np.select([(df[1].astype(str).str.len()>1) & (df[1].astype(str).str.len()<5)], [df[1].astype(str).str[-1].astype(int)], default=10)
 
+#%% Prettyfying dataframe
+df = df.drop(df.columns[0], axis=1) # Remove redundant index
+df = df.rename(columns={1: "Label"}) # Add name to label column
+
 #%% Plotting class distributions
 
 sns.histplot(df['CC'])
