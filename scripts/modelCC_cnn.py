@@ -33,6 +33,9 @@ for f in files:
 y_avg = int(np.sum(y) / len(y))
 x_avg = int(np.sum(x) / len(x))
 
+print(f'Smallest height: {np.array(y).min()}px, smallest width: {np.array(x).min()}px, largest height: {np.array(y).max()}px, largest width: {np.array(x).max()}px')
+print(f'Average height: {y_avg}px, average width: {x_avg}px')
+
 input_shape=(y_avg, x_avg, 3)
 
 #%% Importing data
@@ -98,7 +101,6 @@ reduceLR = ReduceLROnPlateau(
     monitor='val_loss',
     factor=0.2,
     patience=4) # reducing learning rate when val_loss doesn't improve for 3 epochs
-
 
 #%% Training
 # computing class weights
