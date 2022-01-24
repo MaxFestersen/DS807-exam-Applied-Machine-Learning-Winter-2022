@@ -28,8 +28,7 @@ df['D'] = np.select([(df[1].astype(str).str.len()>1) & (df[1].astype(str).str.le
 df['Y'] = np.select([(df[1].astype(str).str.len()>1) & (df[1].astype(str).str.len()<5)], [df[1].astype(str).str[-1].astype(int)], default=10)
 
 #%% Prettyfying dataframe
-df = df.drop(df.columns[0], axis=1) # Remove redundant index
-df = df.rename(columns={1: "Label"}) # Add name to label column
+df = df.rename(columns={0: "Name", 1: "Label"}) # Add name to label column
 
 #%% Plotting class distributions
 
