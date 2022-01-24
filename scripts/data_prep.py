@@ -27,3 +27,34 @@ plt.figure()
 sns.histplot(df['D'])
 plt.figure()
 sns.histplot(df['Y'])
+
+#%% Saving new .csv
+df.to_csv("data/data.csv", index=False)
+
+#%% Copying files to CC folder
+from shutil import copyfile
+
+for i in range(0, len(df)):
+    src = os.path.join('data/', df.iloc[i, 2])
+    dst = os.path.join('data/CC/', str(df.iloc[i, 3]) + "/", str(df.iloc[i, 0]) + ".jpg")
+    if not os.path.exists(os.path.dirname(dst)):
+        os.makedirs(os.path.dirname(dst))
+    copyfile(src, dst)
+
+#%% Copying files to D folder
+for i in range(0, len(df)):
+    src = os.path.join('data/', df.iloc[i, 2])
+    dst = os.path.join('data/D/', str(df.iloc[i, 4]) + "/", str(df.iloc[i, 0]) + ".jpg")
+    if not os.path.exists(os.path.dirname(dst)):
+        os.makedirs(os.path.dirname(dst))
+    copyfile(src, dst)
+    
+#%% Copying files to Y folder
+for i in range(0, len(df)):
+    src = os.path.join('data/', df.iloc[i, 2])
+    dst = os.path.join('data/Y/', str(df.iloc[i, 5]) + "/", str(df.iloc[i, 0]) + ".jpg")
+    if not os.path.exists(os.path.dirname(dst)):
+        os.makedirs(os.path.dirname(dst))
+    copyfile(src, dst)
+
+#%% Splitting folders to train/test/val
