@@ -12,13 +12,11 @@ import pandas as pd
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-import seaborn as sns
 from skimage.io import imread
 from skimage.transform import resize
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-from sklearn import svm
-
+from sklearn import svm, datasets
+from sklearn.model_selection import GridSearchCV
 
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
@@ -60,33 +58,37 @@ X_val, y_val = splitfolder_to_array(Categories=['0','1'], datadir='data/split/CC
 print(X_train.shape, X_test.shape, y_train.shape, y_test.shape, X_val, y_val)
 
 #%% Question 1.2 Problem solving: CC
-#%% Question 1.2 Problem solving: CC SVM
-# Note: Det er meget langsomt at køre høj mængde af ploynomier og c!
-poly_degrees = [1,2,3,6,8,10] # input values seperated by ",".
-Cs = [0.01,0.1,1,10,100] # input values seperated by ",".
-# Især 10000 c er langsomt. Jeg vil dog forsøge uanset.
+#%% Question 1.2 Problem solving: CC SVM gridsearch
+parameters = {'kernel':('linear', 'rbf'), 'C':[0.01, 0.05, 0.1, 0.5, 1, 5, 10]}
+svc = svm.SVC()
+clf = GridSearchCV(svc, parameters)
+clf.fit(X_train, y_train)
+sorted(clf.cv_results_.keys())
+#%% Question 1.2 Problem solving: CC SVM loop
+kernels = ["Linear", "rbf", "poly"]
+Cs = [0.01, 0.05, 0.1, 0.5, 1]
+results_C = []
 
-results = []
-
-for degree in poly_degrees:
+for kernel in kernels:
     for C in Cs:
-        svm_poly = svm.SVC(kernel='poly', degree=degree, C=C)
+        svm_poly = svm.SVC(kernel=kernel, C=C)
         svm_poly.fit(X_train, y_train)
         y_val_hat = svm_poly.predict(X_val)
         accuracy = accuracy_score(y_val_hat, y_val)
         
-        results.append([accuracy, degree, C])
+        results_C.append([accuracy, kernel, C])
 
-results = pd.DataFrame(results)
-results.columns = ['Accuracy', 'Polynomial degree', 'C']
-print(results)
+results_C = pd.DataFrame(results_C)
+results_C.columns = ['Accuracy', 'Kernel', 'C']
+print(results_C)
 
-best_d = results[results['Accuracy'] == results['Accuracy'].max()].iloc[0]['Polynomial degree']
-best_c = results[results['Accuracy'] == results['Accuracy'].max()].iloc[0]['C']
+#%% Question 1.2 Problem solving: CC SVM Best model
+best_k = results_C[results_C['Accuracy'] == results_C['Accuracy'].max()].iloc[0]['Kernel']
+best_c = results_C[results_C['Accuracy'] == results_C['Accuracy'].max()].iloc[0]['C']
 
-results[results['Accuracy'] == results['Accuracy'].max()]
+results_C[results_C['Accuracy'] == results_C['Accuracy'].max()]
 
-svm_poly_best = svm.SVC(kernel='poly', degree=best_d, C = best_c)
+svm_poly_best = svm.SVC(kernel=best_k, C = best_c)
 
 # Use both training and validation data to fit it (np.concatenate "stacks" the array like rbind in R)
 svm_poly_best.fit(np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val]))
@@ -96,7 +98,7 @@ y_val_hat_poly_best = svm_poly_best.predict(X_test)
 
 # Obtain and check accuracy on test data
 accuracy_poly_best = accuracy_score(y_val_hat_poly_best, y_test)
-print(f'Optimized polynomial SVM achieved {round(accuracy_poly_best * 100, 1)}% accuracy.')
+print(f'Optimized polynomial SVM achieved {round(accuracy_poly_best * 100, 1)}% accuracy on C.')
 
 #%% Question 1.2 Problem solving: CC RF
 #todo
@@ -105,9 +107,24 @@ print(f'Optimized polynomial SVM achieved {round(accuracy_poly_best * 100, 1)}% 
 #todo
 
 #%% Question 1.2 Problem solving: D
+#%% Question 1.2 Problem solving: D SVM
 #todo
 
+#%% Question 1.2 Problem solving: D RF
+#todo
+
+#%% Question 1.2 Problem solving: D B
+#todo
+
+
 #%% Question 1.2 Problem solving: Y
+#%% Question 1.2 Problem solving: Y SVM
+#todo
+
+#%% Question 1.2 Problem solving: Y RF
+#todo
+
+#%% Question 1.2 Problem solving: Y B
 #todo
 
 #%% Question 1.2 Performance
