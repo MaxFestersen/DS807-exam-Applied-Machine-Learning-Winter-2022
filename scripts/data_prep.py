@@ -9,6 +9,8 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
+from shutil import copyfile
+import splitfolders
 
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
@@ -41,8 +43,6 @@ sns.histplot(df['Y'])
 df.to_csv("data/data.csv", index=False)
 
 #%% Copying files to CC folder
-from shutil import copyfile
-
 for i in range(0, len(df)):
     src = os.path.join('data/', df.iloc[i, 2])
     dst = os.path.join('data/CC/', str(df.iloc[i, 3]) + "/", str(df.iloc[i, 0]) + ".jpg")
@@ -67,3 +67,7 @@ for i in range(0, len(df)):
     copyfile(src, dst)
 
 #%% Splitting folders to train/test/val
+splitfolders.ratio("data/CC/", output="data/split/CC/", seed=1337, ratio=(0.8, 0.1, 0.1))
+splitfolders.ratio("data/D/", output="data/split/D/", seed=1337, ratio=(0.8, 0.1, 0.1))
+splitfolders.ratio("data/Y/", output="data/split/Y/", seed=1337, ratio=(0.8, 0.1, 0.1))
+
