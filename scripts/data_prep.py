@@ -9,6 +9,11 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+# Set path to parrent location of current file
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
 os.chdir("../")
 
 #%% Importing data and encoding new colums
