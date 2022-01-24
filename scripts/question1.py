@@ -46,8 +46,7 @@ def splitfolder_to_array(Categories, datadir):
         path=os.path.join(datadir,i)
         for img in os.listdir(path):
             img_array=imread(os.path.join(path,img))
-            img_resized=resize(img_array,(150,80,3))
-            flat_data_arr.append(img_resized.flatten())
+            flat_data_arr.append(img_array.flatten())
             target_arr.append(Categories.index(i))
         print(f'loaded category: {i} successfully')
     return np.array(flat_data_arr), np.array(target_arr);
