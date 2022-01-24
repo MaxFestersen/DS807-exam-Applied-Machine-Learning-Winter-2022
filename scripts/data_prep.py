@@ -83,7 +83,7 @@ for i in range(0, len(df)):
     if not os.path.exists(os.path.dirname(dst)):
         os.makedirs(os.path.dirname(dst))
     copyfile(src, dst)
-    
+
 #%% Copying files to Y folder
 for i in range(0, len(df)):
     src = os.path.join('data/', df.iloc[i, 2])
