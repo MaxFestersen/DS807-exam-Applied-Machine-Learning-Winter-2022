@@ -16,6 +16,8 @@ import seaborn as sns
 from skimage.io import imread
 from skimage.transform import resize
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn import svm
 
 
 # Set path to parrent location of current file
@@ -55,9 +57,51 @@ def splitfolder_to_array(Categories, datadir):
 X_train, y_train = splitfolder_to_array(Categories=['0','1'], datadir='data/split/CC/train')
 X_test, y_test = splitfolder_to_array(Categories=['0','1'], datadir='data/split/CC/test')
 X_val, y_val = splitfolder_to_array(Categories=['0','1'], datadir='data/split/CC/val')
-print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)
+print(X_train.shape, X_test.shape, y_train.shape, y_test.shape, X_val, y_val)
 
 #%% Question 1.2 Problem solving: CC
+#%% Question 1.2 Problem solving: CC SVM
+# Note: Det er meget langsomt at køre høj mængde af ploynomier og c!
+poly_degrees = [1,2,3,6,8,10] # input values seperated by ",".
+Cs = [0.01,0.1,1,10,100] # input values seperated by ",".
+# Især 10000 c er langsomt. Jeg vil dog forsøge uanset.
+
+results = []
+
+for degree in poly_degrees:
+    for C in Cs:
+        svm_poly = svm.SVC(kernel='poly', degree=degree, C=C)
+        svm_poly.fit(X_train, y_train)
+        y_val_hat = svm_poly.predict(X_val)
+        accuracy = accuracy_score(y_val_hat, y_val)
+        
+        results.append([accuracy, degree, C])
+
+results = pd.DataFrame(results)
+results.columns = ['Accuracy', 'Polynomial degree', 'C']
+print(results)
+
+best_d = results[results['Accuracy'] == results['Accuracy'].max()].iloc[0]['Polynomial degree']
+best_c = results[results['Accuracy'] == results['Accuracy'].max()].iloc[0]['C']
+
+results[results['Accuracy'] == results['Accuracy'].max()]
+
+svm_poly_best = svm.SVC(kernel='poly', degree=best_d, C = best_c)
+
+# Use both training and validation data to fit it (np.concatenate "stacks" the array like rbind in R)
+svm_poly_best.fit(np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val]))
+
+# Predict on test data
+y_val_hat_poly_best = svm_poly_best.predict(X_test)
+
+# Obtain and check accuracy on test data
+accuracy_poly_best = accuracy_score(y_val_hat_poly_best, y_test)
+print(f'Optimized polynomial SVM achieved {round(accuracy_poly_best * 100, 1)}% accuracy.')
+
+#%% Question 1.2 Problem solving: CC RF
+#todo
+
+#%% Question 1.2 Problem solving: CC B
 #todo
 
 #%% Question 1.2 Problem solving: D
