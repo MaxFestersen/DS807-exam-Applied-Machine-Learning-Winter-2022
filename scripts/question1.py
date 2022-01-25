@@ -17,6 +17,7 @@ from skimage.transform import resize
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn import svm, datasets
 from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import StandardScaler
 
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
@@ -66,14 +67,23 @@ X_test_Y, y_test_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6
 X_val_Y, y_val_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6','7','8','9','10'], datadir='data/split/Y/val')
 print(X_train_Y.shape, X_test_Y.shape, y_train_Y.shape, y_test_Y.shape, X_val_Y.shape, y_val_Y.shape)
 
+#%% Scaling data
+
+scaler = StandardScaler()
+X_train_Y = scaler.fit_transform(X_train_Y)
+X_val_Y = scaler.transform(X_val_Y)
+X_test_Y = scaler.transform(X_test_Y)
+
 #%% Question 1.2 Problem solving: CC
 #%% Question 1.2 Problem solving: CC SVM gridsearch
 parameters = {'kernel':('linear', 'rbf'), 'C':[1], 'gamma':[1, 0.01, 0.0001]}
 svc = svm.SVC()
-clf = GridSearchCV(svc, parameters)
-clf.fit(np.concatenate((X_train_CC, X_val_CC), axis=0), np.concatenate((y_train_CC, y_val_CC), axis=0))
+clf = GridSearchCV(svc, 
+                   parameters,
+                   n_jobs=-1, # number of simultaneous jobs (-1 all cores)
+                   scoring='balanced_accuracy')
+clf.fit(np.concatenate((X_train_Y, X_val_Y), axis=0), np.concatenate((y_train_Y, y_val_Y), axis=0))
 sorted(clf.cv_results_.keys())
-
 
 #%% Question 1.2 Problem solving: CC SVM loop
 kernels = ["linear", "rbf", "poly"]
