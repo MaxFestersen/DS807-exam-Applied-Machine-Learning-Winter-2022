@@ -153,13 +153,13 @@ best_c = 100
 svm_poly_best = svm.SVC(kernel=best_k, C = best_c)
 
 # Use both training and validation data to fit it (np.concatenate "stacks" the array like rbind in R)
-svm_poly_best.fit(np.concatenate([X_train_CC, X_val_CC]), np.concatenate([y_train_CC, y_val_CC]))
+svm_poly_best.fit(np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val]))
 
 # Predict on test data
-y_val_hat_poly_best = svm_poly_best.predict(X_test_CC)
+y_val_hat_poly_best = svm_poly_best.predict(X_test)
 
 # Obtain and check accuracy on test data
-accuracy_poly_best = accuracy_score(y_val_hat_poly_best, y_test_CC)
+accuracy_poly_best = accuracy_score(y_val_hat_poly_best, y_test)
 print(f'Optimized polynomial SVM achieved {round(accuracy_poly_best * 100, 1)}% accuracy on C.')
 
 #%% Question 1.2 Problem solving: CC RF
