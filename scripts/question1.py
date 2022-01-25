@@ -66,6 +66,7 @@ X_train_Y, y_train_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5',
 X_test_Y, y_test_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6','7','8','9','10'], datadir='data/split/Y/test')
 X_val_Y, y_val_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6','7','8','9','10'], datadir='data/split/Y/val')
 print(X_train_Y.shape, X_test_Y.shape, y_train_Y.shape, y_test_Y.shape, X_val_Y.shape, y_val_Y.shape)
+<<<<<<< HEAD
 
 #%% Scaling data
 
@@ -74,6 +75,34 @@ X_train_Y = scaler.fit_transform(X_train_Y)
 X_val_Y = scaler.transform(X_val_Y)
 X_test_Y = scaler.transform(X_test_Y)
 
+=======
+#%%
+# save numpy array as npy file
+#from numpy import asarray
+from numpy import save
+l1 = ['X_train_', 'y_train_', 'X_test_', 'y_test_', 'X_val_', 'y_val_']
+l2 = ['CC','D','Y']
+for i in l1:
+    for j in l2:
+        a=f"data/{i}{j}"
+        b=f'{i}{j}'
+        save(a, b)
+#%%        
+# save to npy file
+save('data/X_train_CC.npy', X_train_CC)
+save('data/y_train_CC.npy', y_train_CC)
+save('data/X_test_CC.npy', X_test_CC)
+save('data/y_test_CC.npy', y_test_CC)
+save('data/X_val_CC.npy', X_val_CC)
+save('data/y_val_CC.npy', y_val_CC)
+#%%
+# load numpy array from npy file
+from numpy import load
+# load array
+data = load('data/data.npy')
+# print the array
+print(data)
+>>>>>>> 38b696781a00a7419e37068e64c3e5272fcb4922
 #%% Question 1.2 Problem solving: CC
 #%% Question 1.2 Problem solving: CC SVM gridsearch
 parameters = {'kernel':('linear', 'rbf'), 'C':[1], 'gamma':[1, 0.01, 0.0001]}
@@ -200,11 +229,11 @@ def make_confusion_matrix(true, pred, class_name1, class_name2):
 make_confusion_matrix(y_test_CC, y_test_hat_sub,'CC_18', 'CC_other')
 #%% Question 1.2 Problem solving: CC B
 #todo
-gbt = ensemble.GradientBoostingClassifier()
+gbt = ensemble.HistGradientBoostingClassifier()
 
 # Fit
 gbt.fit(X_train_CC, y_train_CC)
-
+#%%
 # Predict
 y_test_hat = gbt.predict(X_test_CC)
 accuracy = accuracy_score(y_test_CC, y_test_hat)
