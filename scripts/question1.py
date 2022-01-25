@@ -68,7 +68,7 @@ print(X_train_Y.shape, X_test_Y.shape, y_train_Y.shape, y_test_Y.shape, X_val_Y.
 
 #%% Question 1.2 Problem solving: CC
 #%% Question 1.2 Problem solving: CC SVM gridsearch
-parameters = {'kernel':('linear', 'rbf'), 'C':[0.01, 0.05, 0.1, 0.5, 1]}
+parameters = {'kernel':('linear', 'rbf'), 'C':[0.1, 1, 10], 'gamma':[1, 0.01, 0.0001]}
 svc = svm.SVC()
 clf = GridSearchCV(svc, parameters)
 clf.fit(np.concatenate((X_train_CC, X_val_CC), axis=0), np.concatenate((y_train_CC, y_val_CC), axis=0))
@@ -78,16 +78,18 @@ sorted(clf.cv_results_.keys())
 #%% Question 1.2 Problem solving: CC SVM loop
 kernels = ["linear", "rbf", "poly"]
 Cs = [0.01]
+gammas = [1, 0.01, 0.0001]
 results_C = []
 
 for kernel in kernels:
     for C in Cs:
-        svm_poly = svm.SVC(kernel=kernel, C=C)
-        svm_poly.fit(X_train_CC, y_train_CC)
-        y_val_hat = svm_poly.predict(X_val_CC)
-        accuracy = accuracy_score(y_val_hat, y_val_CC)
-        
-        results_C.append([accuracy, kernel, C])
+        for gamma in gammas:
+            svm= svm.SVC(kernel=kernel, C=C, gamma=gamma)
+            svm.fit(X_train_CC, y_train_CC)
+            y_val_hat = svm.predict(X_val_CC)
+            accuracy = accuracy_score(y_val_hat, y_val_CC)
+            
+            results_C.append([accuracy, kernel, C])
 
 results_C = pd.DataFrame(results_C)
 results_C.columns = ['Accuracy', 'Kernel', 'C']
