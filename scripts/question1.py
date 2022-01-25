@@ -14,7 +14,7 @@ import os
 import matplotlib.pyplot as plt
 from skimage.io import imread
 from skimage.transform import resize
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn import svm, datasets
 from sklearn.model_selection import GridSearchCV
 
