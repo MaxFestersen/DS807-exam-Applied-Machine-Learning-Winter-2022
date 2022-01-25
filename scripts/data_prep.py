@@ -12,6 +12,7 @@ import seaborn as sns
 from shutil import copyfile
 import splitfolders
 from PIL import Image
+import PIL.ImageOps
 
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
@@ -60,8 +61,12 @@ print(f'Smallest height: {np.array(y).min()}px, smallest width: {np.array(x).min
 print(f'Average height: {y_avg}px, average width: {x_avg}px')
 
 for f in files:
-    image = Image.open(os.path.join('data/DIDA_1/' + f))
-    image = image.resize((x_avg, y_avg), Image.NEAREST)
+    image = Image.open(os.path.join('data/DIDA_1/' + f)).convert('L')
+    image = PIL.ImageOps.invert(image)
+    image = PIL.ImageOps.autocontrast(image, cutoff=(30,0))
+    #image = image.point(lambda p: p > 50 and 255) # too aggressive maybe needs a filter before?
+    #image = image.resize((x_avg, y_avg), Image.NEAREST)
+    image = PIL.ImageOps.pad(image, (x_avg, y_avg)) # keeps original aspect ratio
     if not os.path.exists('data/DIDA_2/'):
         os.makedirs('data/DIDA_2/')
     image.save(os.path.join('data/DIDA_2/' + f), quality=100, subsampling=0)
