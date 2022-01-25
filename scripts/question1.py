@@ -147,10 +147,8 @@ print(results[results['mean_test_score'] == results['mean_test_score'].min()])
 joblib.dump(clf, 'data/q12svm.pkl')
 
 #%% Question 1.2 Problem solving: CC SVM Best model
-best_k = results_C[results_C['Accuracy'] == results_C['Accuracy'].max()].iloc[0]['Kernel']
-best_c = results_C[results_C['Accuracy'] == results_C['Accuracy'].max()].iloc[0]['C']
-
-results_C[results_C['Accuracy'] == results_C['Accuracy'].max()]
+best_k = 'rbf'
+best_c = 100
 
 svm_poly_best = svm.SVC(kernel=best_k, C = best_c)
 
