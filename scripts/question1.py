@@ -143,25 +143,6 @@ clf.fit(np.concatenate((X_train, X_val), axis=0), np.concatenate((y_train, y_val
 results = pd.DataFrame(clf.cv_results_)
 print(results[results['mean_test_score'] == results['mean_test_score'].min()])
 
-#%% Question 1.2 Problem solving: CC SVM loop
-kernels = ["linear", "rbf", "poly"]
-Cs = [0.01]
-gammas = [1, 0.01, 0.0001]
-results_C = []
-
-for kernel in kernels:
-    for C in Cs:
-        for gamma in gammas:
-            svm= svm.SVC(kernel=kernel, C=C, gamma=gamma)
-            svm.fit(X_train_CC, y_train_CC)
-            y_val_hat = svm.predict(X_val_CC)
-            accuracy = accuracy_score(y_val_hat, y_val_CC)
-            
-            results_C.append([accuracy, kernel, C])
-
-results_C = pd.DataFrame(results_C)
-results_C.columns = ['Accuracy', 'Kernel', 'C']
-print(results_C)
 #%% Question 1.2 Problem solving: CC SVM gridsearch - Save results
 joblib.dump(clf, 'data/q12svm.pkl')
 
