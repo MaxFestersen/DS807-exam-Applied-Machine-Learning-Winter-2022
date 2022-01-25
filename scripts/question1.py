@@ -137,7 +137,9 @@ clf = GridSearchCV(svc,
                    n_jobs=-1, # number of simultaneous jobs (-1 all cores)
                    scoring='balanced_accuracy')
 clf.fit(np.concatenate((X_train_Y, X_val_Y), axis=0), np.concatenate((y_train_Y, y_val_Y), axis=0))
-sorted(clf.cv_results_.keys())
+
+results = pd.DataFrame(clf.cv_results_)
+print(results[results['mean_test_score'] == results['mean_test_score'].min()])
 
 #%% Question 1.2 Problem solving: CC SVM loop
 kernels = ["linear", "rbf", "poly"]
