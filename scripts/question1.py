@@ -68,31 +68,58 @@ X_val_Y, y_val_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6',
 print(X_train_Y.shape, X_test_Y.shape, y_train_Y.shape, y_test_Y.shape, X_val_Y.shape, y_val_Y.shape)
 
 #%%
+from numpy import save
+from numpy import load
 # save numpy array as npy file
 #from numpy import asarray
-from numpy import save
-l1 = ['X_train_', 'y_train_', 'X_test_', 'y_test_', 'X_val_', 'y_val_']
-l2 = ['CC','D','Y']
-for i in l1:
-    for j in l2:
-        a=f"data/{i}{j}"
-        b=f'{i}{j}'
-        save(a, b)
-#%%        
-# save to npy file
+#CC
 save('data/X_train_CC.npy', X_train_CC)
 save('data/y_train_CC.npy', y_train_CC)
 save('data/X_test_CC.npy', X_test_CC)
 save('data/y_test_CC.npy', y_test_CC)
 save('data/X_val_CC.npy', X_val_CC)
 save('data/y_val_CC.npy', y_val_CC)
+#D
+save('data/X_train_D.npy', X_train_D)
+save('data/y_train_D.npy', y_train_D)
+save('data/X_test_D.npy', X_test_D)
+save('data/y_test_D.npy', y_test_D)
+save('data/X_val_D.npy', X_val_D)
+save('data/y_val_D.npy', y_val_D)
+#Y
+save('data/X_train_Y.npy', X_train_Y)
+save('data/y_train_Y.npy', y_train_Y)
+save('data/X_test_Y.npy', X_test_Y)
+save('data/y_test_Y.npy', y_test_Y)
+save('data/X_val_Y.npy', X_val_Y)
+save('data/y_val_Y.npy', y_val_Y)
+
 #%%
 # load numpy array from npy file
-from numpy import load
-# load array
-data = load('data/data.npy')
-# print the array
-print(data)
+#%%
+#CC
+X_train_CC = load('data/X_train_CC.npy')
+y_train_CC = load('data/y_train_CC.npy')
+X_test_CC = load('data/X_test_CC.npy')
+y_test_CC = load('data/y_test_CC.npy')
+X_val_CC = load('data/X_val_CC.npy')
+y_val_CC = load('data/y_val_CC.npy')
+#%%
+#D
+X_train_D = load('data/X_train_D.npy')
+y_train_D = load('data/y_train_D.npy')
+X_test_D = load('data/X_test_D.npy')
+y_test_D = load('data/y_test_D.npy')
+X_val_D = load('data/X_val_D.npy')
+y_val_D = load('data/y_val_D.npy')
+#%%
+#Y
+X_train_Y = load('data/X_train_Y.npy')
+y_train_Y = load('data/y_train_Y.npy')
+X_test_Y = load('data/X_test_Y.npy')
+y_test_Y = load('data/y_test_Y.npy')
+X_val_Y = load('data/X_val_Y.npy')
+y_val_Y = load('data/y_val_Y.npy')
 
 #%% Scaling data
 
@@ -100,6 +127,7 @@ scaler = StandardScaler()
 X_train_Y = scaler.fit_transform(X_train_Y)
 X_val_Y = scaler.transform(X_val_Y)
 X_test_Y = scaler.transform(X_test_Y)
+
 #%% Question 1.2 Problem solving: CC
 #%% Question 1.2 Problem solving: CC SVM gridsearch
 parameters = {'kernel':('rbf', 'linear', 'poly'), 'C':[1, 10, 100], 'gamma':['auto', 'scale']}
