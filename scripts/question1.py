@@ -144,7 +144,12 @@ print(f'Optimized polynomial SVM achieved {round(accuracy_poly_best * 100, 1)}% 
 print("Calculate and report the method’s performance on the training, validation, and test data.")
 
 #%% Question 1.2 Performance: CC
-print(sorted(clf.cv_results_()))
+#print(sorted(clf.cv_results_()))
+clf_predictions = clf.predict(X_test_CC)
+
+print(clf.best_estimator_)
+print(clf.best_params_)
+print(classification_report(y_test_CC, clf_predictions))
 
 #%% Question 1.2 Performance: D
 #todo
