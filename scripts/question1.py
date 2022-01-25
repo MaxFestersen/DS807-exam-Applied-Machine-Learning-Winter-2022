@@ -68,7 +68,7 @@ print(X_train_Y.shape, X_test_Y.shape, y_train_Y.shape, y_test_Y.shape, X_val_Y.
 
 #%% Question 1.2 Problem solving: CC
 #%% Question 1.2 Problem solving: CC SVM gridsearch
-parameters = {'kernel':('linear', 'rbf'), 'C':[0.1, 1, 10], 'gamma':[1, 0.01, 0.0001]}
+parameters = {'kernel':('linear', 'rbf'), 'C':[1], 'gamma':[1, 0.01, 0.0001]}
 svc = svm.SVC()
 clf = GridSearchCV(svc, parameters)
 clf.fit(np.concatenate((X_train_CC, X_val_CC), axis=0), np.concatenate((y_train_CC, y_val_CC), axis=0))
