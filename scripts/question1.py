@@ -99,28 +99,28 @@ save('data/y_val_Y.npy', y_val_Y)
 # load numpy array from npy file
 #%%
 #CC
-X_train_CC = load('data/X_train_CC.npy')
-y_train_CC = load('data/y_train_CC.npy')
-X_test_CC = load('data/X_test_CC.npy')
-y_test_CC = load('data/y_test_CC.npy')
-X_val_CC = load('data/X_val_CC.npy')
-y_val_CC = load('data/y_val_CC.npy')
+X_train = load('data/X_train_CC.npy')
+y_train = load('data/y_train_CC.npy')
+X_test = load('data/X_test_CC.npy')
+y_test = load('data/y_test_CC.npy')
+X_val = load('data/X_val_CC.npy')
+y_val = load('data/y_val_CC.npy')
 #%%
 #D
-X_train_D = load('data/X_train_D.npy')
-y_train_D = load('data/y_train_D.npy')
-X_test_D = load('data/X_test_D.npy')
-y_test_D = load('data/y_test_D.npy')
-X_val_D = load('data/X_val_D.npy')
-y_val_D = load('data/y_val_D.npy')
+X_train = load('data/X_train_D.npy')
+y_train = load('data/y_train_D.npy')
+X_test = load('data/X_test_D.npy')
+y_test = load('data/y_test_D.npy')
+X_val = load('data/X_val_D.npy')
+y_val = load('data/y_val_D.npy')
 #%%
 #Y
-X_train_Y = load('data/X_train_Y.npy')
-y_train_Y = load('data/y_train_Y.npy')
-X_test_Y = load('data/X_test_Y.npy')
-y_test_Y = load('data/y_test_Y.npy')
-X_val_Y = load('data/X_val_Y.npy')
-y_val_Y = load('data/y_val_Y.npy')
+X_train = load('data/X_train_Y.npy')
+y_train = load('data/y_train_Y.npy')
+X_test = load('data/X_test_Y.npy')
+y_test = load('data/y_test_Y.npy')
+X_val = load('data/X_val_Y.npy')
+y_val = load('data/y_val_Y.npy')
 
 #%% Scaling data
 
