@@ -59,14 +59,14 @@ X_test_CC, y_test_CC = splitfolder_to_array(Categories=['0','1'], datadir='data/
 X_val_CC, y_val_CC = splitfolder_to_array(Categories=['0','1'], datadir='data/split/CC/val')
 print(X_train_CC.shape, X_test_CC.shape, y_train_CC.shape, y_test_CC.shape, X_val_CC.shape, y_val_CC.shape)
 
-X_train_D, y_train_D = splitfolder_to_array(Categories=['0','1','2','3','4','5','6','7','8','9','10'], datadir='data/split/D/train')
-X_test_D, y_test_D = splitfolder_to_array(Categories=['0','1','2','3','4','5','6','7','8','9','10'], datadir='data/split/D/test')
-X_val_D, y_val_D = splitfolder_to_array(Categories=['0','1','2','3','4','5','6','7','8','9','10'], datadir='data/split/D/val')
+X_train_D, y_train_D = splitfolder_to_array(Categories=['0','1','2','3','4','10'], datadir='data/split/D/train')
+X_test_D, y_test_D = splitfolder_to_array(Categories=['0','1','2','3','4','10'], datadir='data/split/D/test')
+X_val_D, y_val_D = splitfolder_to_array(Categories=['0','1','2','3','4','10'], datadir='data/split/D/val')
 print(X_train_D.shape, X_test_D.shape, y_train_D.shape, y_test_D.shape, X_val_D.shape, y_val_D.shape)
 
-X_train_Y, y_train_Y = splitfolder_to_array(Categories=['0','1','2','3','4','10'], datadir='data/split/Y/train')
-X_test_Y, y_test_Y = splitfolder_to_array(Categories=['0','1','2','3','4','10'], datadir='data/split/Y/test')
-X_val_Y, y_val_Y = splitfolder_to_array(Categories=['0','1','2','3','4','10'], datadir='data/split/Y/val')
+X_train_Y, y_train_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6','7','8','9','10'], datadir='data/split/Y/train')
+X_test_Y, y_test_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6','7','8','9','10'], datadir='data/split/Y/test')
+X_val_Y, y_val_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6','7','8','9','10'], datadir='data/split/Y/val')
 print(X_train_Y.shape, X_test_Y.shape, y_train_Y.shape, y_test_Y.shape, X_val_Y.shape, y_val_Y.shape)
 
 #%%
