@@ -101,11 +101,91 @@ accuracy_poly_best = accuracy_score(y_val_hat_poly_best, y_test)
 print(f'Optimized polynomial SVM achieved {round(accuracy_poly_best * 100, 1)}% accuracy on C.')
 
 #%% Question 1.2 Problem solving: CC RF
-#todo
+from sklearn.metrics import accuracy_score
+from sklearn import ensemble # ensemble instead of tree
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import classification_report
+import seaborn
+#%%
+# Initialize
+rf = ensemble.RandomForestClassifier(random_state=(42))
 
+# Fit
+rf.fit(X_train, y_train)
+
+# Predict
+y_test_hat_std = rf.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_std)
+print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
+#%%
+
+# Initialize
+rf = ensemble.RandomForestClassifier(class_weight='balanced', random_state=(42))
+
+# Fit
+rf.fit(X_train, y_train)
+
+# Predict
+y_test_hat_bal = rf.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_bal)
+print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
+
+#%%
+# Initialize
+rf = ensemble.RandomForestClassifier(class_weight='balanced_subsample', random_state=(42))
+
+# Fit
+rf.fit(X_train, y_train)
+
+# Predict
+y_test_hat_sub = rf.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_sub)
+print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
+#%%
+import imbalanced_learn as imblearn
+from imblearn.ensemble import BalancedRandomForestClassifier
+# Initialize
+rf = ensemble.BalancedRandomForestClassifier()
+
+# Fit
+rf.fit(X_train, y_train)
+
+# Predict
+y_test_hat = rf.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat)
+print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
+
+#%%
+
+def make_confusion_matrix(true, pred, class_name1, class_name2):
+    cm = confusion_matrix(true, pred)
+    plt.clf()
+    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Wistia)
+    classNames = [class_name1,class_name2]
+    plt.title(f'{class_name1} or Not Confusion Matrix')
+    plt.ylabel('True')
+    plt.xlabel('Predicted')
+    tick_marks = np.arange(len(classNames))
+    plt.xticks(tick_marks, classNames) 
+    plt.yticks(tick_marks, classNames)
+    s = [['TN','FP'], ['FN', 'TP']]
+    for i in range(2):
+        for j in range(2):
+            plt.text(j,i, str(s[i][j])+" = "+str(cm[i][j]))
+    plt.show()
+    
+make_confusion_matrix(y_test, y_test_hat_sub,'CC_18', 'CC_other')
 #%% Question 1.2 Problem solving: CC B
 #todo
+gbt = ensemble.GradientBoostingClassifier()
 
+# Fit
+gbt.fit(X_train, y_train)
+
+# Predict
+y_test_hat = gbt.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat)
+print(f'''Gradient boosted DTs with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 #%% Question 1.2 Problem solving: D
 #%% Question 1.2 Problem solving: D SVM
 #todo
