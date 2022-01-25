@@ -125,9 +125,9 @@ y_val = load('data/y_val_Y.npy')
 #%% Scaling data
 
 scaler = StandardScaler()
-X_train_Y = scaler.fit_transform(X_train_Y)
-X_val_Y = scaler.transform(X_val_Y)
-X_test_Y = scaler.transform(X_test_Y)
+X_train = scaler.fit_transform(X_train)
+X_val = scaler.transform(X_val)
+X_test = scaler.transform(X_test)
 
 #%% Question 1.2 Problem solving: CC
 #%% Question 1.2 Problem solving: CC SVM gridsearch
