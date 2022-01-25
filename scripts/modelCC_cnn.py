@@ -14,6 +14,14 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLRO
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import datetime
 from sklearn.utils import class_weight 
+import os
+
+
+# Set path to parrent location of current file
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+os.chdir("../")
 
 #%% Importing data
 datagen = ImageDataGenerator(rescale=1/255.0)
