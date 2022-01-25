@@ -18,6 +18,8 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn import svm, datasets
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
+from numpy import save
+from numpy import load
 
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
@@ -68,8 +70,7 @@ X_val_Y, y_val_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6',
 print(X_train_Y.shape, X_test_Y.shape, y_train_Y.shape, y_test_Y.shape, X_val_Y.shape, y_val_Y.shape)
 
 #%%
-from numpy import save
-from numpy import load
+
 # save numpy array as npy file
 #from numpy import asarray
 #CC
@@ -250,7 +251,7 @@ def make_confusion_matrix(true, pred, class_name1, class_name2):
         for j in range(2):
             plt.text(j,i, str(s[i][j])+" = "+str(cm[i][j]))
     plt.show()
-    
+#%%    
 make_confusion_matrix(y_test_CC, y_test_hat_sub,'CC_18', 'CC_other')
 #%% Question 1.2 Problem solving: CC B
 #todo
@@ -269,7 +270,17 @@ print(f'''Gradient boosted DTs with default settings achieved {round(accuracy * 
 
 #%% Question 1.2 Problem solving: D RF
 #todo
+# Initialize
+rf = ensemble.RandomForestClassifier(random_state=(42))
 
+# Fit
+rf.fit(X_train_D, y_train_D)
+
+# Predict
+y_test_hat_std = rf.predict(X_test_D)
+accuracy = accuracy_score(y_test_D, y_test_hat_std)
+print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
+print(confusion_matrix(y_test_D, y_test_hat_std))
 #%% Question 1.2 Problem solving: D B
 #todo
 
