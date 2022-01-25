@@ -161,6 +161,8 @@ for kernel in kernels:
 results_C = pd.DataFrame(results_C)
 results_C.columns = ['Accuracy', 'Kernel', 'C']
 print(results_C)
+#%% Question 1.2 Problem solving: CC SVM gridsearch - Save results
+joblib.dump(clf, 'data/q12svm.pkl')
 
 #%% Question 1.2 Problem solving: CC SVM Best model
 best_k = results_C[results_C['Accuracy'] == results_C['Accuracy'].max()].iloc[0]['Kernel']
