@@ -76,8 +76,8 @@ sorted(clf.cv_results_.keys())
 
 
 #%% Question 1.2 Problem solving: CC SVM loop
-kernels = ["Linear", "rbf", "poly"]
-Cs = [0.01, 0.05, 0.1, 0.5, 1]
+kernels = ["linear", "rbf", "poly"]
+Cs = [0.01]
 results_C = []
 
 for kernel in kernels:
@@ -142,7 +142,7 @@ print(f'Optimized polynomial SVM achieved {round(accuracy_poly_best * 100, 1)}% 
 print("Calculate and report the method’s performance on the training, validation, and test data.")
 
 #%% Question 1.2 Performance: CC
-#todo
+print(sorted(clf.cv_results_()))
 
 #%% Question 1.2 Performance: D
 #todo
