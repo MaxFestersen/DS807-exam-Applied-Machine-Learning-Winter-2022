@@ -130,7 +130,7 @@ X_test_Y = scaler.transform(X_test_Y)
 
 #%% Question 1.2 Problem solving: CC
 #%% Question 1.2 Problem solving: CC SVM gridsearch
-parameters = {'kernel':('linear', 'rbf'), 'C':[1], 'gamma':[1, 0.01, 0.0001]}
+parameters = {'kernel':('rbf', 'linear', 'poly'), 'C':[1, 10, 100], 'gamma':['auto', 'scale']}
 svc = svm.SVC()
 clf = GridSearchCV(svc, 
                    parameters,
