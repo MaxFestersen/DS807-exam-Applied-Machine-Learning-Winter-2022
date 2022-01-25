@@ -20,6 +20,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from numpy import save
 from numpy import load
+import joblib
 
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
@@ -306,11 +307,12 @@ print("Calculate and report the method’s performance on the training, validati
 
 #%% Question 1.2 Performance: CC
 #print(sorted(clf.cv_results_()))
-clf_predictions = clf.predict(X_test_CC)
+svm_gridsearch_res = joblib.load("data/q12svm.pkl")
+clf_predictions = svm_gridsearch_res.predict(X_test)
 
-print(clf.best_estimator_)
-print(clf.best_params_)
-print(classification_report(y_test_CC, clf_predictions))
+print(svm_gridsearch_res.best_estimator_)
+print(svm_gridsearch_res.best_params_)
+print(classification_report(y_test, clf_predictions))
 
 #%% Question 1.2 Performance: D
 #todo
