@@ -143,6 +143,8 @@ print(f'Optimized polynomial SVM achieved {round(accuracy_poly_best * 100, 1)}% 
 #%% Question 1.2 Performance
 print("Calculate and report the method’s performance on the training, validation, and test data.")
 
+# Accuracy metric is bad for evaluating performance.
+
 #%% Question 1.2 Performance: CC
 #print(sorted(clf.cv_results_()))
 clf_predictions = clf.predict(X_test_CC)
