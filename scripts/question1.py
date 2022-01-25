@@ -66,16 +66,7 @@ X_train_Y, y_train_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5',
 X_test_Y, y_test_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6','7','8','9','10'], datadir='data/split/Y/test')
 X_val_Y, y_val_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6','7','8','9','10'], datadir='data/split/Y/val')
 print(X_train_Y.shape, X_test_Y.shape, y_train_Y.shape, y_test_Y.shape, X_val_Y.shape, y_val_Y.shape)
-<<<<<<< HEAD
 
-#%% Scaling data
-
-scaler = StandardScaler()
-X_train_Y = scaler.fit_transform(X_train_Y)
-X_val_Y = scaler.transform(X_val_Y)
-X_test_Y = scaler.transform(X_test_Y)
-
-=======
 #%%
 # save numpy array as npy file
 #from numpy import asarray
@@ -102,7 +93,13 @@ from numpy import load
 data = load('data/data.npy')
 # print the array
 print(data)
->>>>>>> 38b696781a00a7419e37068e64c3e5272fcb4922
+
+#%% Scaling data
+
+scaler = StandardScaler()
+X_train_Y = scaler.fit_transform(X_train_Y)
+X_val_Y = scaler.transform(X_val_Y)
+X_test_Y = scaler.transform(X_test_Y)
 #%% Question 1.2 Problem solving: CC
 #%% Question 1.2 Problem solving: CC SVM gridsearch
 parameters = {'kernel':('linear', 'rbf'), 'C':[1], 'gamma':[1, 0.01, 0.0001]}
