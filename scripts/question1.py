@@ -124,11 +124,11 @@ import seaborn
 rf = ensemble.RandomForestClassifier(random_state=(42))
 
 # Fit
-rf.fit(X_train, y_train)
+rf.fit(X_train_CC, y_train_CC)
 
 # Predict
-y_test_hat_std = rf.predict(X_test)
-accuracy = accuracy_score(y_test, y_test_hat_std)
+y_test_hat_std = rf.predict(X_test_CC)
+accuracy = accuracy_score(y_test_CC, y_test_hat_std)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 #%%
 
@@ -136,11 +136,11 @@ print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy
 rf = ensemble.RandomForestClassifier(class_weight='balanced', random_state=(42))
 
 # Fit
-rf.fit(X_train, y_train)
+rf.fit(X_train_CC, y_train_CC)
 
 # Predict
-y_test_hat_bal = rf.predict(X_test)
-accuracy = accuracy_score(y_test, y_test_hat_bal)
+y_test_hat_bal = rf.predict(X_test_CC)
+accuracy = accuracy_score(y_test_CC, y_test_hat_bal)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 
 #%%
@@ -148,11 +148,11 @@ print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy
 rf = ensemble.RandomForestClassifier(class_weight='balanced_subsample', random_state=(42))
 
 # Fit
-rf.fit(X_train, y_train)
+rf.fit(X_train_CC, y_train_CC)
 
 # Predict
-y_test_hat_sub = rf.predict(X_test)
-accuracy = accuracy_score(y_test, y_test_hat_sub)
+y_test_hat_sub = rf.predict(X_test_CC)
+accuracy = accuracy_score(y_test_CC, y_test_hat_sub)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 #%%
 import imbalanced_learn as imblearn
@@ -161,11 +161,11 @@ from imblearn.ensemble import BalancedRandomForestClassifier
 rf = ensemble.BalancedRandomForestClassifier()
 
 # Fit
-rf.fit(X_train, y_train)
+rf.fit(X_train_CC, y_train_CC)
 
 # Predict
-y_test_hat = rf.predict(X_test)
-accuracy = accuracy_score(y_test, y_test_hat)
+y_test_hat = rf.predict(X_test_CC)
+accuracy = accuracy_score(y_test_CC, y_test_hat)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 
 #%%
@@ -187,17 +187,17 @@ def make_confusion_matrix(true, pred, class_name1, class_name2):
             plt.text(j,i, str(s[i][j])+" = "+str(cm[i][j]))
     plt.show()
     
-make_confusion_matrix(y_test, y_test_hat_sub,'CC_18', 'CC_other')
+make_confusion_matrix(y_test_CC, y_test_hat_sub,'CC_18', 'CC_other')
 #%% Question 1.2 Problem solving: CC B
 #todo
 gbt = ensemble.GradientBoostingClassifier()
 
 # Fit
-gbt.fit(X_train, y_train)
+gbt.fit(X_train_CC, y_train_CC)
 
 # Predict
-y_test_hat = gbt.predict(X_test)
-accuracy = accuracy_score(y_test, y_test_hat)
+y_test_hat = gbt.predict(X_test_CC)
+accuracy = accuracy_score(y_test_CC, y_test_hat)
 print(f'''Gradient boosted DTs with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 #%% Question 1.2 Problem solving: D
 #%% Question 1.2 Problem solving: D SVM
