@@ -58,6 +58,9 @@ for f in files:
 y_avg = int(np.sum(y) / len(y))
 x_avg = int(np.sum(x) / len(x))
 
+y_resize = int(y_avg/4)
+x_resize = int(x_avg/4)
+
 print(f'Smallest height: {np.array(y).min()}px, smallest width: {np.array(x).min()}px, largest height: {np.array(y).max()}px, largest width: {np.array(x).max()}px')
 print(f'Average height: {y_avg}px, average width: {x_avg}px')
 
@@ -67,12 +70,12 @@ for f in files:
     image = PIL.ImageOps.autocontrast(image, cutoff=(60,0)) # bumping contrast 
     bbox = image.point(lambda p: p > 45 and 255).getbbox() # finding bounding box in image
     image = image.crop(bbox) # cropping image to that bounding box
-    image = PIL.ImageOps.pad(image, (x_avg, y_avg)) # up/down scales while keeping original aspect ratio
+    image = PIL.ImageOps.pad(image, (x_resize, y_resize)) # up/down scales while keeping original aspect ratio
     if not os.path.exists('data/DIDA_2/'):
         os.makedirs('data/DIDA_2/') # making save directory if it doesn't exist
     image.save(os.path.join('data/DIDA_2/' + f), quality=100, subsampling=0) # saving image in highest quality
 
-print(f'Images resized to height {y_avg}px, and width {x_avg}px')
+print(f'Images resized to height {y_resize}px, and width {x_resize}px')
 
 #%% Copying files to CC folder
 for i in range(0, len(df)):
