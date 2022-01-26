@@ -8,10 +8,12 @@ Created on Mon Jan 24 11:16:52 2022
 #%% Importing libraries
 import numpy as np
 import tensorflow as tf
+from tensorboard.plugins.hparams import api as hp
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.metrics import AUC
 import datetime
 from sklearn.utils import class_weight 
 import os
@@ -32,21 +34,103 @@ train_gen = datagen.flow_from_directory('data/split/CC/train',
                                         batch_size=batch_size,
                                         shuffle=True,
                                         seed=1234,
-                                        target_size=(130, 250),
-                                        class_mode='binary')
+                                        class_mode='binary',
+                                        color_mode='grayscale',
+                                        target_size=(32, 62))
 
 val_gen = datagen.flow_from_directory('data/split/CC/val', 
                                       batch_size=batch_size,
                                       shuffle=True,
                                       seed=1234,
-                                      target_size=(130, 250),
-                                      class_mode='binary')
+                                      class_mode='binary',
+                                      color_mode='grayscale',
+                                      target_size=(32, 62))
 
-test_gen = datagen.flow_from_directory('data/split/CC/test')
+test_gen = datagen.flow_from_directory('data/split/CC/test',
+                                       batch_size=batch_size,
+                                       class_mode='binary',
+                                       color_mode='grayscale')
 
-input_shape=(130, 250, 3)
+input_shape=(32, 62, 1)
 
-#%%
+STEP_SIZE_TRAIN=train_gen.n//train_gen.batch_size
+STEP_SIZE_VALID=val_gen.n//val_gen.batch_size
+
+#%% Setting up hyperparameter tuning
+HP_NUM_UNITS_1 = hp.HParam('num_units_1', hp.Discrete([8,16]))
+HP_NUM_UNITS_2 = hp.HParam('num_units_2', hp.Discrete([16,32]))
+HP_NUM_UNITS_3 = hp.HParam('num_units_3', hp.Discrete([128,256]))
+HP_ACT_FUNC = hp.HParam('activation_func', hp.Discrete(['relu', 'tanh']))
+HP_OPTIMIZER = hp.HParam('optimizer', hp.Discrete(['adam', 'sgd']))
+
+METRIC_PRC = tf.keras.metrics.AUC(name='prc', curve='PR')
+METRIC_ACC = 'accuracy'
+
+with tf.summary.create_file_writer('logs/hparam_tuning').as_default():
+    hp.hparams_config(
+        hparams=[HP_NUM_UNITS_1, HP_NUM_UNITS_2, HP_NUM_UNITS_3, HP_ACT_FUNC, HP_OPTIMIZER],
+        metrics=[hp.Metric(METRIC_PRC.name, display_name=METRIC_PRC.name), hp.Metric(METRIC_ACC, display_name='Accuracy')],
+    )
+
+def train_model(hparams):
+    model = Sequential([
+        Conv2D(hparams[HP_NUM_UNITS_1], (3,3), activation=hparams[HP_ACT_FUNC], input_shape=input_shape),
+        MaxPooling2D(2,2),
+        Conv2D(hparams[HP_NUM_UNITS_2], (3,3), activation=hparams[HP_ACT_FUNC]),
+        Flatten(),
+        Dense(hparams[HP_NUM_UNITS_3], activation=hparams[HP_ACT_FUNC]),
+        Dense(1, activation='sigmoid')
+    ])
+    model.compile(
+        optimizer=hparams[HP_OPTIMIZER],
+        loss='binary_crossentropy',
+        metrics=[METRIC_PRC, 'accuracy'],
+    )
+    
+    class_weights = class_weight.compute_class_weight(
+               'balanced',
+                np.unique(train_gen.classes), 
+                train_gen.classes)
+
+    train_class_weights = dict(enumerate(class_weights))
+    
+    model.fit(train_gen, 
+              epochs=10,
+              steps_per_epoch=STEP_SIZE_TRAIN,
+              class_weight=train_class_weights)
+    _, prc, accuracy = model.evaluate(val_gen, steps=STEP_SIZE_VALID)
+    return prc, accuracy
+
+def run(run_dir, hparams):
+    with tf.summary.create_file_writer(run_dir).as_default():
+        hp.hparams(hparams)
+        prc, accuracy = train_model(hparams)
+        tf.summary.scalar(METRIC_PRC.name, prc, step=1)
+        tf.summary.scaler(METRIC_ACC, accuracy, step=1)
+
+#%% Running hyperparameter tuning
+
+session_num = 0
+
+for num_units_1 in HP_NUM_UNITS_1.domain.values:
+    for num_units_2 in HP_NUM_UNITS_2.domain.values:
+        for num_units_3 in HP_NUM_UNITS_3.domain.values:
+            for activation in HP_ACT_FUNC.domain.values:
+                for optimizer in HP_OPTIMIZER.domain.values:
+                    hparams = {
+                        HP_NUM_UNITS_1: num_units_1,
+                        HP_NUM_UNITS_2: num_units_2,
+                        HP_NUM_UNITS_3: num_units_3,
+                        HP_ACT_FUNC: activation,
+                        HP_OPTIMIZER: optimizer,
+                    }
+                    run_name = "run-%d" % session_num
+                    print('--- Starting trail: %s' % run_name)
+                    print({h.name: hparams[h] for h in hparams})
+                    run('logs/hparam_tuning/' + run_name, hparams)
+                    session_num += 1
+
+#%% final model (not decided yet)
 modelCC = Sequential([
     Conv2D(16, (3,3), activation='relu', input_shape=input_shape, name='conv_1'),
     Conv2D(32, (3,3), activation='relu', name='conv_2'),
@@ -107,9 +191,6 @@ class_weights = class_weight.compute_class_weight(
             train_gen.classes)
 
 train_class_weights = dict(enumerate(class_weights))
-
-STEP_SIZE_TRAIN=train_gen.n//train_gen.batch_size
-STEP_SIZE_VALID=val_gen.n//val_gen.batch_size
 
 modelCC.fit(train_gen,
             steps_per_epoch=STEP_SIZE_TRAIN,
