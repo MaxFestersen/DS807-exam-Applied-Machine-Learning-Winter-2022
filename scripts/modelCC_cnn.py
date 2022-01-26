@@ -35,14 +35,16 @@ train_gen = datagen.flow_from_directory('data/split/CC/train',
                                         shuffle=True,
                                         seed=1234,
                                         class_mode='binary',
-                                        color_mode='grayscale')
+                                        color_mode='grayscale',
+                                        target_size=(32, 62))
 
 val_gen = datagen.flow_from_directory('data/split/CC/val', 
                                       batch_size=batch_size,
                                       shuffle=True,
                                       seed=1234,
                                       class_mode='binary',
-                                      color_mode='grayscale')
+                                      color_mode='grayscale',
+                                      target_size=(32, 62))
 
 test_gen = datagen.flow_from_directory('data/split/CC/test',
                                        batch_size=batch_size,
@@ -62,11 +64,12 @@ HP_ACT_FUNC = hp.HParam('activation_func', hp.Discrete(['relu', 'tanh']))
 HP_OPTIMIZER = hp.HParam('optimizer', hp.Discrete(['adam', 'sgd']))
 
 METRIC_PRC = tf.keras.metrics.AUC(name='prc', curve='PR')
+METRIC_ACC = 'accuracy'
 
 with tf.summary.create_file_writer('logs/hparam_tuning').as_default():
     hp.hparams_config(
         hparams=[HP_NUM_UNITS_1, HP_NUM_UNITS_2, HP_NUM_UNITS_3, HP_ACT_FUNC, HP_OPTIMIZER],
-        metrics=[hp.Metric(METRIC_PRC.name, display_name=METRIC_PRC.name)],
+        metrics=[hp.Metric(METRIC_PRC.name, display_name=METRIC_PRC.name), hp.Metric(METRIC_ACC, display_name='Accuracy')],
     )
 
 def train_model(hparams):
@@ -81,7 +84,7 @@ def train_model(hparams):
     model.compile(
         optimizer=hparams[HP_OPTIMIZER],
         loss='binary_crossentropy',
-        metrics=[METRIC_PRC],
+        metrics=[METRIC_PRC, 'accuracy'],
     )
     
     class_weights = class_weight.compute_class_weight(
@@ -95,14 +98,15 @@ def train_model(hparams):
               epochs=10,
               steps_per_epoch=STEP_SIZE_TRAIN,
               class_weight=train_class_weights)
-    _, prc = model.evaluate()
-    return prc
+    _, prc, accuracy = model.evaluate(val_gen, steps=STEP_SIZE_VALID)
+    return prc, accuracy
 
 def run(run_dir, hparams):
     with tf.summary.create_file_writer(run_dir).as_default():
         hp.hparams(hparams)
-        prc = train_model(hparams)
-        tf.summary.scalar(METRIC_PRC, prc, step=1)
+        prc, accuracy = train_model(hparams)
+        tf.summary.scalar(METRIC_PRC.name, prc, step=1)
+        tf.summary.scaler(METRIC_ACC, accuracy, step=1)
 
 #%% Running hyperparameter tuning
 
