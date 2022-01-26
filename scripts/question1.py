@@ -20,6 +20,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from numpy import save
 from numpy import load
+import joblib
 
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
@@ -59,9 +60,9 @@ X_test_CC, y_test_CC = splitfolder_to_array(Categories=['0','1'], datadir='data/
 X_val_CC, y_val_CC = splitfolder_to_array(Categories=['0','1'], datadir='data/split/CC/val')
 print(X_train_CC.shape, X_test_CC.shape, y_train_CC.shape, y_test_CC.shape, X_val_CC.shape, y_val_CC.shape)
 
-X_train_D, y_train_D = splitfolder_to_array(Categories=['0','1','2','3','4','5'], datadir='data/split/D/train')
-X_test_D, y_test_D = splitfolder_to_array(Categories=['0','1','2','3','4','5'], datadir='data/split/D/test')
-X_val_D, y_val_D = splitfolder_to_array(Categories=['0','1','2','3','4','5'], datadir='data/split/D/val')
+X_train_D, y_train_D = splitfolder_to_array(Categories=['0','1','2','3','4','10'], datadir='data/split/D/train')
+X_test_D, y_test_D = splitfolder_to_array(Categories=['0','1','2','3','4','10'], datadir='data/split/D/test')
+X_val_D, y_val_D = splitfolder_to_array(Categories=['0','1','2','3','4','10'], datadir='data/split/D/val')
 print(X_train_D.shape, X_test_D.shape, y_train_D.shape, y_test_D.shape, X_val_D.shape, y_val_D.shape)
 
 X_train_Y, y_train_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6','7','8','9','10'], datadir='data/split/Y/train')
@@ -99,35 +100,35 @@ save('data/y_val_Y.npy', y_val_Y)
 # load numpy array from npy file
 #%%
 #CC
-X_train_CC = load('data/X_train_CC.npy')
-y_train_CC = load('data/y_train_CC.npy')
-X_test_CC = load('data/X_test_CC.npy')
-y_test_CC = load('data/y_test_CC.npy')
-X_val_CC = load('data/X_val_CC.npy')
-y_val_CC = load('data/y_val_CC.npy')
+X_train = load('data/X_train_CC.npy')
+y_train = load('data/y_train_CC.npy')
+X_test = load('data/X_test_CC.npy')
+y_test = load('data/y_test_CC.npy')
+X_val = load('data/X_val_CC.npy')
+y_val = load('data/y_val_CC.npy')
 #%%
 #D
-X_train_D = load('data/X_train_D.npy')
-y_train_D = load('data/y_train_D.npy')
-X_test_D = load('data/X_test_D.npy')
-y_test_D = load('data/y_test_D.npy')
-X_val_D = load('data/X_val_D.npy')
-y_val_D = load('data/y_val_D.npy')
+X_train = load('data/X_train_D.npy')
+y_train = load('data/y_train_D.npy')
+X_test = load('data/X_test_D.npy')
+y_test = load('data/y_test_D.npy')
+X_val = load('data/X_val_D.npy')
+y_val = load('data/y_val_D.npy')
 #%%
 #Y
-X_train_Y = load('data/X_train_Y.npy')
-y_train_Y = load('data/y_train_Y.npy')
-X_test_Y = load('data/X_test_Y.npy')
-y_test_Y = load('data/y_test_Y.npy')
-X_val_Y = load('data/X_val_Y.npy')
-y_val_Y = load('data/y_val_Y.npy')
+X_train = load('data/X_train_Y.npy')
+y_train = load('data/y_train_Y.npy')
+X_test = load('data/X_test_Y.npy')
+y_test = load('data/y_test_Y.npy')
+X_val = load('data/X_val_Y.npy')
+y_val = load('data/y_val_Y.npy')
 
 #%% Scaling data
 
 scaler = StandardScaler()
-X_train_Y = scaler.fit_transform(X_train_Y)
-X_val_Y = scaler.transform(X_val_Y)
-X_test_Y = scaler.transform(X_test_Y)
+X_train = scaler.fit_transform(X_train)
+X_val = scaler.transform(X_val)
+X_test = scaler.transform(X_test)
 
 #%% Question 1.2 Problem solving: CC
 #%% Question 1.2 Problem solving: CC SVM gridsearch
@@ -137,47 +138,28 @@ clf = GridSearchCV(svc,
                    parameters,
                    n_jobs=-1, # number of simultaneous jobs (-1 all cores)
                    scoring='balanced_accuracy')
-clf.fit(np.concatenate((X_train_Y, X_val_Y), axis=0), np.concatenate((y_train_Y, y_val_Y), axis=0))
+clf.fit(np.concatenate((X_train, X_val), axis=0), np.concatenate((y_train, y_val), axis=0))
 
 results = pd.DataFrame(clf.cv_results_)
 print(results[results['mean_test_score'] == results['mean_test_score'].min()])
 
-#%% Question 1.2 Problem solving: CC SVM loop
-kernels = ["linear", "rbf", "poly"]
-Cs = [0.01]
-gammas = [1, 0.01, 0.0001]
-results_C = []
-
-for kernel in kernels:
-    for C in Cs:
-        for gamma in gammas:
-            svm= svm.SVC(kernel=kernel, C=C, gamma=gamma)
-            svm.fit(X_train_CC, y_train_CC)
-            y_val_hat = svm.predict(X_val_CC)
-            accuracy = accuracy_score(y_val_hat, y_val_CC)
-            
-            results_C.append([accuracy, kernel, C])
-
-results_C = pd.DataFrame(results_C)
-results_C.columns = ['Accuracy', 'Kernel', 'C']
-print(results_C)
+#%% Question 1.2 Problem solving: CC SVM gridsearch - Save results
+joblib.dump(clf, 'data/q12svm.pkl')
 
 #%% Question 1.2 Problem solving: CC SVM Best model
-best_k = results_C[results_C['Accuracy'] == results_C['Accuracy'].max()].iloc[0]['Kernel']
-best_c = results_C[results_C['Accuracy'] == results_C['Accuracy'].max()].iloc[0]['C']
-
-results_C[results_C['Accuracy'] == results_C['Accuracy'].max()]
+best_k = 'rbf'
+best_c = 100
 
 svm_poly_best = svm.SVC(kernel=best_k, C = best_c)
 
 # Use both training and validation data to fit it (np.concatenate "stacks" the array like rbind in R)
-svm_poly_best.fit(np.concatenate([X_train_CC, X_val_CC]), np.concatenate([y_train_CC, y_val_CC]))
+svm_poly_best.fit(np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val]))
 
 # Predict on test data
-y_val_hat_poly_best = svm_poly_best.predict(X_test_CC)
+y_val_hat_poly_best = svm_poly_best.predict(X_test)
 
 # Obtain and check accuracy on test data
-accuracy_poly_best = accuracy_score(y_val_hat_poly_best, y_test_CC)
+accuracy_poly_best = accuracy_score(y_val_hat_poly_best, y_test)
 print(f'Optimized polynomial SVM achieved {round(accuracy_poly_best * 100, 1)}% accuracy on C.')
 
 #%% Question 1.2 Problem solving: CC RF
@@ -308,11 +290,12 @@ print("Calculate and report the method’s performance on the training, validati
 
 #%% Question 1.2 Performance: CC
 #print(sorted(clf.cv_results_()))
-clf_predictions = clf.predict(X_test_CC)
+svm_gridsearch_res = joblib.load("data/q12svm.pkl")
+clf_predictions = svm_gridsearch_res.predict(X_test)
 
-print(clf.best_estimator_)
-print(clf.best_params_)
-print(classification_report(y_test_CC, clf_predictions))
+print(svm_gridsearch_res.best_estimator_)
+print(svm_gridsearch_res.best_params_)
+print(classification_report(y_test, clf_predictions))
 
 #%% Question 1.2 Performance: D
 #todo
