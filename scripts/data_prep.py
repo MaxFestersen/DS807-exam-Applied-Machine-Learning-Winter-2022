@@ -6,6 +6,7 @@ Data preparation
 #%% Importing libraries
 import pandas as pd
 import numpy as np
+from numpy import save
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -14,6 +15,7 @@ import splitfolders
 from PIL import Image
 import PIL.ImageOps
 from PIL.ImageFilter import MedianFilter
+from skimage.io import imread
 
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
@@ -108,3 +110,56 @@ for i in range(0, len(df)):
 splitfolders.ratio("data/CC/", output="data/split/CC/", seed=1337, ratio=(0.8, 0.1, 0.1))
 splitfolders.ratio("data/D/", output="data/split/D/", seed=1337, ratio=(0.8, 0.1, 0.1))
 splitfolders.ratio("data/Y/", output="data/split/Y/", seed=1337, ratio=(0.8, 0.1, 0.1))
+
+#%% Generate test, train and validation vectores
+def splitfolder_to_array(Categories, datadir):
+    flat_data_arr=[] #input array
+    target_arr=[] #output array
+    for i in Categories:
+        print(f'loading... category : {i}')
+        path=os.path.join(datadir,i)
+        for img in os.listdir(path):
+            img_array=imread(os.path.join(path,img))
+            flat_data_arr.append(img_array.flatten())
+            target_arr.append(Categories.index(i))
+        print(f'loaded category: {i} successfully')
+    return np.array(flat_data_arr), np.array(target_arr);
+
+X_train_CC, y_train_CC = splitfolder_to_array(Categories=['0','1'], datadir='data/split/CC/train')
+X_test_CC, y_test_CC = splitfolder_to_array(Categories=['0','1'], datadir='data/split/CC/test')
+X_val_CC, y_val_CC = splitfolder_to_array(Categories=['0','1'], datadir='data/split/CC/val')
+print(X_train_CC.shape, X_test_CC.shape, y_train_CC.shape, y_test_CC.shape, X_val_CC.shape, y_val_CC.shape)
+
+X_train_D, y_train_D = splitfolder_to_array(Categories=['0','1','2','3','4','10'], datadir='data/split/D/train')
+X_test_D, y_test_D = splitfolder_to_array(Categories=['0','1','2','3','4','10'], datadir='data/split/D/test')
+X_val_D, y_val_D = splitfolder_to_array(Categories=['0','1','2','3','4','10'], datadir='data/split/D/val')
+print(X_train_D.shape, X_test_D.shape, y_train_D.shape, y_test_D.shape, X_val_D.shape, y_val_D.shape)
+
+X_train_Y, y_train_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6','7','8','9','10'], datadir='data/split/Y/train')
+X_test_Y, y_test_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6','7','8','9','10'], datadir='data/split/Y/test')
+X_val_Y, y_val_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6','7','8','9','10'], datadir='data/split/Y/val')
+print(X_train_Y.shape, X_test_Y.shape, y_train_Y.shape, y_test_Y.shape, X_val_Y.shape, y_val_Y.shape)
+
+#%% Save numpy array as npy file
+#from numpy import asarray
+#CC
+save('data/X_train_CC.npy', X_train_CC)
+save('data/y_train_CC.npy', y_train_CC)
+save('data/X_test_CC.npy', X_test_CC)
+save('data/y_test_CC.npy', y_test_CC)
+save('data/X_val_CC.npy', X_val_CC)
+save('data/y_val_CC.npy', y_val_CC)
+#D
+save('data/X_train_D.npy', X_train_D)
+save('data/y_train_D.npy', y_train_D)
+save('data/X_test_D.npy', X_test_D)
+save('data/y_test_D.npy', y_test_D)
+save('data/X_val_D.npy', X_val_D)
+save('data/y_val_D.npy', y_val_D)
+#Y
+save('data/X_train_Y.npy', X_train_Y)
+save('data/y_train_Y.npy', y_train_Y)
+save('data/X_test_Y.npy', X_test_Y)
+save('data/y_test_Y.npy', y_test_Y)
+save('data/X_val_Y.npy', X_val_Y)
+save('data/y_val_Y.npy', y_val_Y)
