@@ -71,17 +71,17 @@ X_test = scaler.transform(X_test)
 #%% Question 1.2 Problem solving: CC SVM gridsearch
 parameters = {'kernel':('rbf', 'linear', 'poly'), 'C':[1, 10, 100], 'gamma':['auto', 'scale']}
 svc = svm.SVC()
-clf = GridSearchCV(svc, 
+svm_CC = GridSearchCV(svc, 
                    parameters,
                    n_jobs=-1, # number of simultaneous jobs (-1 all cores)
                    scoring='balanced_accuracy')
-clf.fit(np.concatenate((X_train, X_val), axis=0), np.concatenate((y_train, y_val), axis=0))
+svm_CC.fit(np.concatenate((X_train, X_val), axis=0), np.concatenate((y_train, y_val), axis=0))
 
-results = pd.DataFrame(clf.cv_results_)
+results = pd.DataFrame(svm_CC.cv_results_)
 print(results[results['mean_test_score'] == results['mean_test_score'].min()])
 
 #%% Question 1.2 Problem solving: CC SVM gridsearch - Save results
-joblib.dump(clf, 'data/q12svm.pkl')
+joblib.dump(svm_CC, 'data/q12svmCC.pkl')
 
 #%% Question 1.2 Problem solving: CC SVM Best model
 best_k = 'rbf'
@@ -227,7 +227,7 @@ print("Calculate and report the method’s performance on the training, validati
 
 #%% Question 1.2 Performance: CC
 #print(sorted(clf.cv_results_()))
-svm_gridsearch_res = joblib.load("data/q12svm.pkl")
+svm_gridsearch_res = joblib.load("data/q12svmCC.pkl")
 clf_predictions = svm_gridsearch_res.predict(X_test)
 
 print(svm_gridsearch_res.best_estimator_)
