@@ -116,6 +116,8 @@ rf.fit(X_train_CC, y_train_CC)
 y_test_hat_std = rf.predict(X_test_CC)
 accuracy = accuracy_score(y_test_CC, y_test_hat_std)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
+df_confusion = pd.crosstab(y_test_CC, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+plot_confusion_matrix(df_confusion)
 #%%
 
 # Initialize
@@ -154,37 +156,35 @@ y_test_hat = rf.predict(X_test_CC)
 accuracy = accuracy_score(y_test_CC, y_test_hat)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 
-#%%
+#%%, cmap='spring'
+df_confusion = pd.crosstab(y_test_CC, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
+    seaborn.heatmap(df_confusion, annot=True, fmt='d')
+    #plt.matshow(df_confusion, cmap=cmap) 
+    #plt.colorbar()
+    #tick_marks = np.arange(len(df_confusion.columns))
+    #plt.yticks(tick_marks, df_confusion.columns)
+    #plt.xticks(tick_marks, df_confusion.index)
+    #plt.ylabel(df_confusion.index.name)
+    #plt.xlabel(df_confusion.columns.name)
+    #for i in range(len(df_confusion.columns)):
+    #    for j in range(len(df_confusion.columns)):
+    #        plt.text(j,i, str(df_confusion[i][j]))
 
-def make_confusion_matrix(true, pred, class_name1, class_name2):
-    cm = confusion_matrix(true, pred)
-    plt.clf()
-    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Wistia)
-    classNames = [class_name1,class_name2]
-    plt.title(f'{class_name1} or Not Confusion Matrix')
-    plt.ylabel('True')
-    plt.xlabel('Predicted')
-    tick_marks = np.arange(len(classNames))
-    plt.xticks(tick_marks, classNames) 
-    plt.yticks(tick_marks, classNames)
-    s = [['TN','FP'], ['FN', 'TP']]
-    for i in range(2):
-        for j in range(2):
-            plt.text(j,i, str(s[i][j])+" = "+str(cm[i][j]))
-    plt.show()
-#%%    
-make_confusion_matrix(y_test_CC, y_test_hat_sub,'CC_18', 'CC_other')
+plot_confusion_matrix(df_confusion)
 #%% Question 1.2 Problem solving: CC B
 #todo
 gbt = ensemble.HistGradientBoostingClassifier()
 
 # Fit
 gbt.fit(X_train_CC, y_train_CC)
-#%%
+
 # Predict
 y_test_hat = gbt.predict(X_test_CC)
 accuracy = accuracy_score(y_test_CC, y_test_hat)
 print(f'''Gradient boosted DTs with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
+df_confusion = pd.crosstab(y_test_CC, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+plot_confusion_matrix(df_confusion)
 #%% Question 1.2 Problem solving: D
 #%% Question 1.2 Problem solving: D SVM
 #todo
@@ -202,9 +202,13 @@ y_test_hat_std = rf.predict(X_test_D)
 accuracy = accuracy_score(y_test_D, y_test_hat_std)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 print(confusion_matrix(y_test_D, y_test_hat_std))
+df_confusion = pd.crosstab(y_test_D, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+df_confusion = df_confusion.reindex(columns=[0,1,2,3,4,5], fill_value=0)
+plot_confusion_matrix(df_confusion)
 #%% Question 1.2 Problem solving: D B
 #todo
 
+print(df.groupby('D').size())
 
 #%% Question 1.2 Problem solving: Y
 #%% Question 1.2 Problem solving: Y SVM
