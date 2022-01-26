@@ -112,13 +112,13 @@ print(f'Optimized polynomial SVM achieved {round(accuracy_poly_best * 100, 1)}% 
 rf = ensemble.RandomForestClassifier(random_state=(42))
 
 # Fit
-rf.fit(X_train_CC, y_train_CC)
+rf.fit(X_train, y_train)
 
 # Predict
-y_test_hat_std = rf.predict(X_test_CC)
-accuracy = accuracy_score(y_test_CC, y_test_hat_std)
+y_test_hat_std = rf.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_std)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
-df_confusion = pd.crosstab(y_test_CC, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+df_confusion = pd.crosstab(y_test, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
 #%%
 
@@ -126,11 +126,11 @@ plot_confusion_matrix(df_confusion)
 rf = ensemble.RandomForestClassifier(class_weight='balanced', random_state=(42))
 
 # Fit
-rf.fit(X_train_CC, y_train_CC)
+rf.fit(X_train, y_train)
 
 # Predict
-y_test_hat_bal = rf.predict(X_test_CC)
-accuracy = accuracy_score(y_test_CC, y_test_hat_bal)
+y_test_hat_bal = rf.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_bal)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 
 #%%
@@ -138,11 +138,11 @@ print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy
 rf = ensemble.RandomForestClassifier(class_weight='balanced_subsample', random_state=(42))
 
 # Fit
-rf.fit(X_train_CC, y_train_CC)
+rf.fit(X_train, y_train)
 
 # Predict
-y_test_hat_sub = rf.predict(X_test_CC)
-accuracy = accuracy_score(y_test_CC, y_test_hat_sub)
+y_test_hat_sub = rf.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_sub)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 #%%
 import imbalanced_learn as imblearn
@@ -151,15 +151,15 @@ from imblearn.ensemble import BalancedRandomForestClassifier
 rf = ensemble.BalancedRandomForestClassifier()
 
 # Fit
-rf.fit(X_train_CC, y_train_CC)
+rf.fit(X_train, y_train)
 
 # Predict
-y_test_hat = rf.predict(X_test_CC)
-accuracy = accuracy_score(y_test_CC, y_test_hat)
+y_test_hat = rf.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 
 #%%, cmap='spring'
-#df_confusion = pd.crosstab(y_test_CC, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+#df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
     seaborn.heatmap(df_confusion, annot=True, fmt='d')
     #plt.matshow(df_confusion, cmap=cmap) 
@@ -179,13 +179,13 @@ def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
 gbt = ensemble.HistGradientBoostingClassifier()
 
 # Fit
-gbt.fit(X_train_CC, y_train_CC)
+gbt.fit(X_train, y_train)
 
 # Predict
-y_test_hat = gbt.predict(X_test_CC)
-accuracy = accuracy_score(y_test_CC, y_test_hat)
+y_test_hat = gbt.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat)
 print(f'''Gradient boosted DTs with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
-df_confusion = pd.crosstab(y_test_CC, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
 #%% Question 1.2 Problem solving: D
 #%% Question 1.2 Problem solving: D SVM
@@ -225,14 +225,14 @@ joblib.dump(svm_D, 'data/q12svmD_acc.pkl')
 rf = ensemble.RandomForestClassifier(random_state=(42))
 
 # Fit
-rf.fit(X_train_D, y_train_D)
+rf.fit(X_train, y_train)
 
 # Predict
-y_test_hat_std = rf.predict(X_test_D)
-accuracy = accuracy_score(y_test_D, y_test_hat_std)
+y_test_hat_std = rf.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_std)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
-print(confusion_matrix(y_test_D, y_test_hat_std))
-df_confusion = pd.crosstab(y_test_D, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+print(confusion_matrix(y_test, y_test_hat_std))
+df_confusion = pd.crosstab(y_test, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 df_confusion = df_confusion.reindex(columns=[0,1,2,3,4,10], fill_value=0)
 plot_confusion_matrix(df_confusion)
 #%%
@@ -269,13 +269,13 @@ rf = ensemble.RandomForestClassifier()
 # search across 100 different combinations, and use all available cores
 rf_random = RandomizedSearchCV(rf, random_grid, n_iter = 10, cv = 3, verbose=2, random_state=42, n_jobs = -1)
 # Fit the random search model
-rf_random.fit(X_train_D, y_train_D)
+rf_random.fit(X_train, y_train)
 
 rf_random.best_params_
-y_test_hat_std = rf_random.predict(X_test_D)
-accuracy = accuracy_score(y_test_D, y_test_hat_std)
+y_test_hat_std = rf_random.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_std)
 print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy.''')
-df_confusion = pd.crosstab(y_test_D, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+df_confusion = pd.crosstab(y_test, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 df_confusion = df_confusion.reindex(columns=[0,1,2,3,4,10], fill_value=0)
 plot_confusion_matrix(df_confusion)
 #%%
@@ -285,13 +285,13 @@ random_accuracy = evaluate(best_random, test_features, test_labels)
 gbt_D = ensemble.HistGradientBoostingClassifier(random_state=(42))
 
 # Fit
-gbt.fit(X_train_D, y_train_D)
+gbt.fit(X_train, y_train)
 
 # Predict
-y_test_hat_D = gbt_D.predict(X_test_D)
-accuracy = accuracy_score(y_test_D, y_test_hat_D)
+y_test_hat_D = gbt_D.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat)
 print(f'''Gradient boosted DTs with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
-df_confusion = pd.crosstab(y_test_D, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
 #%% Question 1.2 Problem solving: Y
 #%% Question 1.2 Problem solving: Y SVM
