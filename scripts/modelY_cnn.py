@@ -56,6 +56,8 @@ test_gen = datagen.flow_from_directory('data/split/Y/test',
                                        shuffle=False)
 
 input_shape=(32, 62, 1)
+STEP_SIZE_TRAIN=train_gen.n//train_gen.batch_size
+STEP_SIZE_VALID=val_gen.n//val_gen.batch_size
 
 #%% Setting up hyperparameter tuning
 HP_NUM_UNITS_1 = hp.HParam('num_units_1', hp.Discrete([8,16,32]))
@@ -66,13 +68,15 @@ HP_ACT_FUNC_2 = hp.HParam('activation_func_2', hp.Discrete(['relu', 'tanh']))
 HP_OPTIMIZER = hp.HParam('optimizer', hp.Discrete(['adam', 'sgd']))
 
 METRIC_PRC = tf.keras.metrics.AUC(name='prc', curve='PR')
+METRIC_ROC = tf.keras.metrics.AUC(name='ROC', curve='ROC')
 METRIC_ACC = 'accuracy'
 
 with tf.summary.create_file_writer('logs/hparam_tuning_Y').as_default():
     hp.hparams_config(
         hparams=[HP_NUM_UNITS_1, HP_NUM_UNITS_2, HP_NUM_UNITS_3, HP_ACT_FUNC, HP_ACT_FUNC_2, HP_OPTIMIZER],
         metrics=[hp.Metric(METRIC_PRC.name, display_name=METRIC_PRC.name), 
-                 hp.Metric(METRIC_ACC, display_name='Accuracy')],
+                 hp.Metric(METRIC_ACC, display_name='Accuracy'),
+                 hp.Metric(METRIC_ROC.name, display_name=METRIC_ROC.name)],
     )
 
 def train_model(hparams):
@@ -87,7 +91,7 @@ def train_model(hparams):
     model.compile(
         optimizer=hparams[HP_OPTIMIZER],
         loss='categorical_crossentropy',
-        metrics=[METRIC_PRC, METRIC_ACC],
+        metrics=[METRIC_PRC, METRIC_ACC, METRIC_ROC],
     )
     
     class_weights = class_weight.compute_class_weight(
@@ -104,15 +108,16 @@ def train_model(hparams):
               validation_steps=STEP_SIZE_VALID,
               class_weight=train_class_weights)
     
-    _, prc, accuracy = model.evaluate(val_gen, steps=STEP_SIZE_VALID)
-    return prc, accuracy
+    _, prc, accuracy, roc = model.evaluate(val_gen, steps=STEP_SIZE_VALID)
+    return prc, accuracy, roc
 
 def run(run_dir, hparams):
     with tf.summary.create_file_writer(run_dir).as_default():
         hp.hparams(hparams)
-        prc, accuracy = train_model(hparams)
+        prc, accuracy, roc = train_model(hparams)
         tf.summary.scalar(METRIC_PRC.name, prc, step=1)
         tf.summary.scalar(METRIC_ACC, accuracy, step=1)
+        tf.summary.scalar(METRIC_ROC.name, roc, step=1)
 
 #%% Running hyperparameter tuning
 
@@ -213,6 +218,11 @@ modelY.evaluate(test_gen) #accuracy 0.8422
 
 #%%
 modelY.save('models/modelY')
+
+#%%
+
+modelY = tf.keras.models.load_model('models/modelY')
+modelY.evaluate(test_gen)
 
 #%%
 def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
