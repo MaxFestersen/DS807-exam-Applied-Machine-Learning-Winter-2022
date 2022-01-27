@@ -231,7 +231,7 @@ svc = svm.SVC()
 svm_Y = GridSearchCV(svc, 
                    parameters,
                    n_jobs=-1, # number of simultaneous jobs (-1 all cores)
-                   scoring='balanced_accuracy')
+                   scoring='accuracy')
 svm_Y.fit(np.concatenate((X_train, X_val), axis=0), np.concatenate((y_train, y_val), axis=0))
 
 results = pd.DataFrame(svm_Y.cv_results_)
