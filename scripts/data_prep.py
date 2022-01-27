@@ -140,7 +140,15 @@ X_test_Y, y_test_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6
 X_val_Y, y_val_Y = splitfolder_to_array(Categories=['0','1','2','3','4','5','6','7','8','9','10'], datadir='data/split/Y/val')
 print(X_train_Y.shape, X_test_Y.shape, y_train_Y.shape, y_test_Y.shape, X_val_Y.shape, y_val_Y.shape)
 
-#%% Save numpy array as npy file
+#%% Save numpy array as npy file - Anders
+#l1 = ['X_train_', 'y_train_', 'X_test_', 'y_test_', 'X_val_', 'y_val_']
+#l2 = ['CC', 'D', 'Y']
+#for i in l1:
+#    for j in l2: 
+#        a = f"'data/{i}{j}.npy'"
+#        b = f'{i}{j}'
+#        save(a,b)
+
 #from numpy import asarray
 #CC
 save('data/X_train_CC.npy', X_train_CC)
