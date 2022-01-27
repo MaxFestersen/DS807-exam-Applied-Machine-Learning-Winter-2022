@@ -34,10 +34,13 @@ df['Y'] = np.select([(df[1].astype(str).str.len()>1) & (df[1].astype(str).str.le
 
 #%% Plotting class distributions
 sns.histplot(df['CC'])
+plt.savefig('CC_dist.png', dpi=300)
 plt.figure()
 sns.histplot(df['D'])
+plt.savefig('D_dist.png', dpi=300)
 plt.figure()
 sns.histplot(df['Y'])
+plt.savefig('Y_dist.png', dpi=300)
 
 #%% reassign 5,6,7,8,9 to class 10 in D
 df.loc[df.D > 4, 'D'] = 10
@@ -49,6 +52,7 @@ df = df.rename(columns={0: "Name", 1: "Label"}) # Add name to label column
 sns.histplot(df['CC'])
 plt.figure()
 sns.histplot(df['D'])
+plt.savefig('D_dist_new.png', dpi=300)
 plt.figure()
 sns.histplot(df['Y'])
 
