@@ -23,9 +23,6 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 os.chdir("../")
 
-#physical_devices = tf.config.list_physical_devices('GPU') 
-#tf.config.experimental.set_memory_growth(physical_devices[0], True)
-
 #%% Importing data
 datagen = ImageDataGenerator(rescale=1/255.0)
 datagen_test = ImageDataGenerator(rescale=1/255.0)
@@ -90,7 +87,7 @@ def train_model(hparams):
     ])
     model.compile(
         optimizer=hparams[HP_OPTIMIZER],
-        loss='binary_crossentropy',
+        loss=tf.keras.losses.BinaryCrossentropy(from_logits=True, name='binary_crossentropy'),
         metrics=[METRIC_PRC, 'accuracy'],
     )
     
