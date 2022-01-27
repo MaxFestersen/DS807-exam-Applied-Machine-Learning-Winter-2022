@@ -19,7 +19,7 @@ import datetime
 from sklearn.utils import class_weight 
 import matplotlib.pyplot as plt
 import os
-import seaborn
+import seaborn as sns
 
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
@@ -216,10 +216,11 @@ modelCC.evaluate(test_gen) #accuracy 0.9875
 #%%
 modelCC.save('models/modelCC')
 
+#modelCC = tf.keras.models.load_model('models/modelCC')
 
 #%%
 def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
-    seaborn.heatmap(df_confusion, annot=True, fmt='d', cmap='Blues')
+    sns.heatmap(df_confusion, annot=True, fmt='d', cmap='Blues')
 
 y_test_hat = np.where(modelCC.predict(test_gen) > 0.5, 1, 0).flatten()
 df_confusion = pd.crosstab(test_gen.classes, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
