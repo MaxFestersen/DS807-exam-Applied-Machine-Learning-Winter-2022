@@ -326,22 +326,22 @@ gbt = ensemble.HistGradientBoostingClassifier(random_state=42)
 gbt.fit(X_train, y_train)
 
 # Predict
-
 y_test_hat = gbt.predict(X_test)
 accuracy = accuracy_score(y_test, y_test_hat)
 kappa = cohen_kappa_score(y_test, y_test_hat)
 print(f'''Gradient boosted DTs with default settings achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,1)}.''')
 df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+
 #%% Question 1.2 Problem solving: D
 #%% Question 1.2 Problem solving: D SVM
 #%% Question 1.2 Problem solving: D SVM gridsearch - Scoring: balanced_accuracy
 parameters = {'kernel':['rbf'], 'C':[10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr']}
-svc = svm.SVC()
-svm_D = GridSearchCV(svc, 
-                   parameters,
-                   n_jobs=-1, # number of simultaneous jobs (-1 all cores)
-                   scoring='balanced_accuracy')
+svc = svm.SVC(probability=True)
+svm_D = GridSearchCV(svc,
+                     parameters,
+                     n_jobs=-1, # number of simultaneous jobs (-1 all cores)
+                     scoring='balanced_accuracy')
 svm_D.fit(np.concatenate((X_train, X_val), axis=0), np.concatenate((y_train, y_val), axis=0))
 
 results = pd.DataFrame(svm_D.cv_results_)
@@ -418,7 +418,7 @@ metrics.cohen_kappa_score
 #%% Question 1.2 Problem solving: Y SVM
 #%% Question 1.2 Problem solving: Y SVM gridsearch
 parameters = {'kernel':('rbf', 'linear', 'poly'), 'C':[1, 10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr', 'ovo']}
-svc = svm.SVC()
+svc = svm.SVC(probability=True)
 svm_Y = GridSearchCV(svc, 
                    parameters,
                    n_jobs=-1, # number of simultaneous jobs (-1 all cores)
@@ -456,7 +456,7 @@ predictions = svm_CC_gridsearch_res.predict(X_test)
 accuracy = accuracy_score(y_test, predictions)
 kappa = cohen_kappa_score(y_test, predictions)
 roc = roc_auc_score(y_test, predictions)
-print(f'SVM  for CC achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.')
+print(f'SVM for CC achieved: {round(accuracy * 100, 1)}% accuracy, a kappa score of {round(kappa,2)}, roc score of {round(roc,2)}.')
 
 if df_scores.loc[df_scores['Method_Category'] == "SVM CC"].empty:
     print("Adding.")
@@ -470,7 +470,7 @@ else:
 #%% Question 1.2 Performance: D
 svm_D_gridsearch_res = joblib.load("data/q12svmD.pkl")
 predictions = svm_D_gridsearch_res.predict(X_test)
-
+proba_pred = svm_D_gridsearch_res.predict_proba(X_test)
 #print(svm_D_gridsearch_res.best_estimator_)
 #print(svm_D_gridsearch_res.best_params_)
 #print(classification_report(y_test, predictions))
@@ -478,7 +478,9 @@ predictions = svm_D_gridsearch_res.predict(X_test)
 # accuracy and kappa score for evaluating performance
 accuracy = accuracy_score(y_test, predictions)
 kappa = cohen_kappa_score(y_test, predictions)
-print(f'SVM  for D achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.')
+roc = roc_auc_score(y_test, , multi_class="ovr")
+roc_auc_score(y, proba_pred, multi_class='ovr')
+print(f'SVM for D achieved: {round(accuracy * 100, 1)}% accuracy, a kappa score of {round(kappa,2)}, roc score of {round(roc,2)}.')
 
 if df_scores.loc[df_scores['Method_Category'] == "SVM D"].empty:
     print("Adding.")
@@ -493,6 +495,7 @@ else:
 #%% Question 1.2 Performance: Y
 svm_Y_gridsearch_res = joblib.load("data/q12svmY.pkl")
 predictions = svm_Y_gridsearch_res.predict(X_test)
+proba_pred = svm_Y_gridsearch_res.predict_proba(X_test)
 
 #print(svm_Y_gridsearch_res.best_estimator_)
 #print(svm_Y_gridsearch_res.best_params_)
@@ -501,7 +504,8 @@ predictions = svm_Y_gridsearch_res.predict(X_test)
 # accuracy and kappa score for evaluating performance
 accuracy = accuracy_score(y_test, predictions)
 kappa = cohen_kappa_score(y_test, predictions)
-print(f'SVM  for Y achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.')
+roc_auc_score(y, proba_pred, multi_class='ovr')
+print(f'SVM for Y achieved: {round(accuracy * 100, 1)}% accuracy, a kappa score of {round(kappa,2)}, roc score of {round(roc,2)}.')
 
 if df_scores.loc[df_scores['Method_Category'] == "SVM Y"].empty:
     print("Adding.")
