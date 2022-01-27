@@ -15,6 +15,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLRO
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import datetime
 from sklearn.utils import class_weight 
+import matplotlib.pyplot as plt
 import os
 
 # Set path to parrent location of current file
@@ -142,39 +143,31 @@ for num_units_1 in HP_NUM_UNITS_1.domain.values:
                         session_num += 1
 
 #%% final model (not decided yet)
-modelCC = Sequential([
-    Conv2D(16, (3,3), activation='relu', input_shape=input_shape, name='conv_1'),
-    Conv2D(32, (3,3), activation='relu', name='conv_2'),
-    MaxPooling2D(2,2),
-    Conv2D(32, (3,3), activation='relu', name='conv_3'),
-    Conv2D(64, (3,3), activation='relu', name='conv_4'),
-    Flatten(),
-    Dense(128, activation='relu'),
-    Dense(1, activation='sigmoid')
-])
+def final_model(num_units_1, num_units_2, num_units_3, act_func_1, act_func_2):
+    modelCC = Sequential([
+        Conv2D(num_units_1, (3,3), activation=act_func_1, input_shape=input_shape, name='conv_1'),
+        MaxPooling2D(2,2),
+        Conv2D(num_units_2, (3,3), activation=act_func_2, name='conv_2'),
+        Flatten(),
+        Dense(num_units_3, activation=act_func_1),
+        Dense(1, activation='sigmoid')
+    ])
 
-METRICS = [
-      tf.keras.metrics.TruePositives(name='tp'),
-      tf.keras.metrics.FalsePositives(name='fp'),
-      tf.keras.metrics.TrueNegatives(name='tn'),
-      tf.keras.metrics.FalseNegatives(name='fn'), 
-      tf.keras.metrics.BinaryAccuracy(name='accuracy'),
-      tf.keras.metrics.Precision(name='precision'),
-      tf.keras.metrics.Recall(name='recall'),
-      tf.keras.metrics.AUC(name='auc'),
-      tf.keras.metrics.AUC(name='prc', curve='PR'), # precision-recall curve
-]
+    METRICS = [
+        tf.keras.metrics.BinaryAccuracy(name='accuracy'),
+        tf.keras.metrics.AUC(name='prc', curve='PR'), # precision-recall curve
+    ]
 
-modelCC.compile(
-    loss='binary_crossentropy',
-    optimizer='adam',
-    metrics=METRICS)
+    modelCC.compile(
+        loss='binary_crossentropy',
+        optimizer='adam',
+        metrics=METRICS)
 
-modelCC.summary()
+    return modelCC
 
 #%% Callbacks
-tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="./logs", histogram_freq=0)  # tensorboard --logdir ./logs
-log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+log_dir = "logs/fit_CC/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)  # tensorboard --logdir ./logs
 
 checkpoint_filepath = './checkpoints/checkpoint-modelCC'
 
@@ -203,10 +196,50 @@ class_weights = class_weight.compute_class_weight(
 
 train_class_weights = dict(enumerate(class_weights))
 
-modelCC.fit(train_gen,
+modelCC = final_model(32, 64, 512, 'relu', 'tanh')
+
+hist = modelCC.fit(train_gen,
             steps_per_epoch=STEP_SIZE_TRAIN,
             validation_data=val_gen,
             validation_steps=STEP_SIZE_VALID,
             epochs=100,
-            callbacks=[tensorboard_callback, modelCheckpoint, earlyStop, reduceLR],
+            callbacks=[tensorboard_callback, modelCheckpoint, earlyStop],
             class_weight=train_class_weights)
+
+#%% Evaluation
+modelCC.load_weights(checkpoint_filepath)
+modelCC.evaluate(test_gen) #accuracy 0.9875
+modelCC.save('models/modelCC.h5')
+
+#%% Plotting model
+best_epoch = np.argmax(hist.history['val_prc'])
+
+plt.plot(hist.history['accuracy'])
+plt.plot(hist.history['val_accuracy'])
+plt.axvline(x=best_epoch)
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('plots/modelCC_acc.png', dpi=300)
+plt.show()
+
+plt.plot(hist.history['prc'])
+plt.plot(hist.history['val_prc'])
+plt.axvline(x=best_epoch)
+plt.title('model PRc')
+plt.ylabel('Precision-Recall curve')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('plots/modelCC_prc.png', dpi=300)
+plt.show()
+
+plt.plot(hist.history['loss'])
+plt.plot(hist.history['val_loss'])
+plt.axvline(x=best_epoch)
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('plots/modelCC_loss.png', dpi=300)
+plt.show()
