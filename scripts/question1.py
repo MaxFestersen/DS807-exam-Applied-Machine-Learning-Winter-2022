@@ -425,18 +425,43 @@ print("Calculate and report the method’s performance on the training, validati
 
 #%% Question 1.2 Performance: CC
 #print(sorted(clf.cv_results_()))
-svm_gridsearch_res = joblib.load("data/q12svmCC.pkl")
-clf_predictions = svm_gridsearch_res.predict(X_test)
+svm_CC_gridsearch_res = joblib.load("data/q12svmCC.pkl")
+predictions = svm_CC_gridsearch_res.predict(X_test)
 
-print(svm_gridsearch_res.best_estimator_)
-print(svm_gridsearch_res.best_params_)
-print(classification_report(y_test, clf_predictions))
+#print(svm_CC_gridsearch_res.best_estimator_)
+#print(svm_CC_gridsearch_res.best_params_)
+#print(classification_report(y_test, predictions))
+
+# accuracy and kappa score for evaluating performance
+accuracy = accuracy_score(y_test, predictions)
+kappa = cohen_kappa_score(y_test, predictions)
+print(f'SVM  for CC achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.')
 
 #%% Question 1.2 Performance: D
-#todo
+svm_D_gridsearch_res = joblib.load("data/q12svmD.pkl")
+predictions = svm_D_gridsearch_res.predict(X_test)
+
+#print(svm_D_gridsearch_res.best_estimator_)
+#print(svm_D_gridsearch_res.best_params_)
+#print(classification_report(y_test, predictions))
+
+# accuracy and kappa score for evaluating performance
+accuracy = accuracy_score(y_test, predictions)
+kappa = cohen_kappa_score(y_test, predictions)
+print(f'SVM  for D achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.')
 
 #%% Question 1.2 Performance: Y
-#todo
+svm_Y_gridsearch_res = joblib.load("data/q12svmY.pkl")
+predictions = svm_Y_gridsearch_res.predict(X_test)
+
+#print(svm_Y_gridsearch_res.best_estimator_)
+#print(svm_Y_gridsearch_res.best_params_)
+#print(classification_report(y_test, predictions))
+
+# accuracy and kappa score for evaluating performance
+accuracy = accuracy_score(y_test, predictions)
+kappa = cohen_kappa_score(y_test, predictions)
+print(f'SVM  for Y achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.')
 
 #%% Question 1.2 Performance-evaluation
 print("Does the performance differ between the different sets? If yes, does this surprise you (explain why or why not)?")
