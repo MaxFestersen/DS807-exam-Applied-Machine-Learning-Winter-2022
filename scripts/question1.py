@@ -314,7 +314,7 @@ plot_confusion_matrix(df_confusion)
 #%% Question 1.2 Problem solving: D
 #%% Question 1.2 Problem solving: D SVM
 #%% Question 1.2 Problem solving: D SVM gridsearch - Scoring: balanced_accuracy
-parameters = {'kernel':('rbf', 'linear', 'poly'), 'C':[1, 10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr', 'ovo']}
+parameters = {'kernel':['rbf'], 'C':[10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr']}
 svc = svm.SVC()
 svm_D = GridSearchCV(svc, 
                    parameters,
