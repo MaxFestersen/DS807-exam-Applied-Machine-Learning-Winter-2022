@@ -18,13 +18,22 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
 from numpy import load
 import joblib
-from sklearn.metrics import accuracy_score, cohen_kappa_score, make_scorer
+from sklearn.metrics import accuracy_score, cohen_kappa_score, make_scorer, roc_auc_score
 from sklearn import ensemble # ensemble instead of tree
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.metrics import classification_report
 import seaborn
 #from sklearn.model_selection import RandomizedSearchCV
 from pprint import pprint
+from imblearn.ensemble import BalancedRandomForestClassifier
+from numpy import mean
+from imblearn.pipeline import Pipeline
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
+from sklearn.model_selection import cross_val_score, RepeatedStratifiedKFold
+from collections import Counter
+import imblearn
+from imblearn.ensemble import BalancedRandomForestClassifier
 
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
@@ -73,6 +82,22 @@ scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_val = scaler.transform(X_val)
 X_test = scaler.transform(X_test)
+
+#%% Anders
+def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
+    seaborn.heatmap(df_confusion, annot=True, fmt='d', cmap='Blues')
+    #plt.matshow(df_confusion, cmap=cmap) 
+    #plt.colorbar()
+    #tick_marks = np.arange(len(df_confusion.columns))
+    #plt.yticks(tick_marks, df_confusion.columns)
+    #plt.xticks(tick_marks, df_confusion.index)
+    #plt.ylabel(df_confusion.index.name)
+    #plt.xlabel(df_confusion.columns.name)
+    #for i in range(len(df_confusion.columns)):
+    #    for j in range(len(df_confusion.columns)):
+    #        plt.text(j,i, str(df_confusion[i][j]))
+
+#plot_confusion_matrix(df_confusion)
 
 #%% Question 1.2 Problem solving: CC
 #%% Question 1.2 Problem solving: CC SVM gridsearch
@@ -144,77 +169,79 @@ pprint(random_grid_GB)
 #%% Question 1.2 Problem solving: CC RF - Anders
 #%% Standard model without tuning
 # Initialize
-rf = ensemble.RandomForestClassifier(random_state=(42))
-
+rf_std_CC = ensemble.RandomForestClassifier(random_state=(42))
 # Fit
-rf.fit(X_train, y_train)
-
+rf_std_CC .fit(X_train, y_train)
 # Predict
-y_test_hat_std = rf.predict(X_test)
-
+y_test_hat_std = rf_std_CC.predict(X_test)
 # accuracy and kappa score for evaluating performance
 accuracy = accuracy_score(y_test, y_test_hat_std)
 kappa = cohen_kappa_score(y_test, y_test_hat_std)
-print(f'''RF with standard settings achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.''')
+roc_auc = roc_auc_score(y_test, y_test_hat_std)
+print(f'''RF with standard settings achieved {round(accuracy * 100, 1)}% accuracy a kappa score of {round(kappa,2)} and roc_auc of {round(roc_auc,2)}.''')
 # confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
 #%% Save model 
 joblib.dump(rf, 'data/q12rfCC_std.pkl')
 #%% load model 
-rf_CCc = joblib.load('data/q12rfCC_std.pkl')
-#%%
+rf_std_CC = joblib.load('data/q12rfCC_std.pkl')
+#%% optimize model and save it. 
 kappa_scorer = make_scorer(cohen_kappa_score)
-# Use the random grid to search for best hyperparameters
-# First create the base model to tune
-rf_CC = ensemble.RandomForestClassifier(random_state=42)
-# Random search of parameters, using 3 fold cross validation, 
-# search across 10 different combinations, use all available cores, and evaluate the performance with kappa
-rf_CC = RandomizedSearchCV(rf_CC, random_grid_RF, n_iter = 10, cv = 3, verbose=2, random_state=42, n_jobs = -1, scoring='roc_auc')
-# Fit the model
-rf_CC.fit(np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val]))
-# optimal parameter settings 
-print(rf_CC.best_params_)
+metrics = [kappa_scorer, 'roc_auc']
+for i in metrics: 
+    # Use the random grid to search for best hyperparameters
+    # First create the base model to tune
+    rf_CC = ensemble.RandomForestClassifier(random_state=42)
+    # Random search of parameters, using 3 fold cross validation, 
+    # search across 10 different combinations, use all available cores, and evaluate the performance with kappa and roc_auc
+    rf_CC = RandomizedSearchCV(rf_CC, random_grid_RF, n_iter = 10, cv = 3, verbose=2, random_state=42, n_jobs = -1, scoring=i) #scoring=kappa_scorer
+    # Fit the model
+    rf_CC.fit(np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val]))
+    joblib.dump(rf_CC, f'data/q12rfCC_{i}.pkl')
+#%% load model ROC_AUC
+rf_CC_ROC = joblib.load('data/q12rfCC_roc_auc.pkl')
+print(rf_CC_ROC.best_params_)
 # predict
-y_test_hat_rf_CC = rf_CC.predict(X_test)
+y_test_hat_rf_CC_ROC = rf_CC_ROC.predict(X_test)
 # accuracy and kappa score for evaluating performance
-accuracy = accuracy_score(y_test, y_test_hat_rf_CC)
-kappa = cohen_kappa_score(y_test, y_test_hat_rf_CC)
-print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.''')
+accuracy = accuracy_score(y_test, y_test_hat_rf_CC_ROC)
+kappa = cohen_kappa_score(y_test, y_test_hat_rf_CC_ROC)
+roc_auc = roc_auc_score(y_test, y_test_hat_rf_CC_ROC)
+print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a kappa score of {round(kappa,3)} and roc_auc of {round(roc_auc,3)}.''')
 # confusion matrix
-df_confusion = pd.crosstab(y_test, y_test_hat_rf_CC, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+df_confusion = pd.crosstab(y_test, y_test_hat_rf_CC_kappa, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
-#%% Save model 
-joblib.dump(rf_CC, 'data/q12rfCC.pkl')
-#%% load model 
-rf_CC = joblib.load('data/q12rfCC.pkl')
-
-#%%
-from collections import Counter
-import imblearn
-from imblearn.ensemble import BalancedRandomForestClassifier
-# Initialize
-rf = imblearn.ensemble.BalancedRandomForestClassifier()
-
-# Fit
-rf.fit(X_train, y_train)
-
-# Predict
-y_test_hat = rf.predict(X_test)
+#%% load model Kappa
+rf_CC_kappa = joblib.load('data/q12rfCC_make_scorer(cohen_kappa_score).pkl')
+print(rf_CC_kappa.best_params_)
+# predict
+y_test_hat_rf_CC_kappa = rf_CC_kappa.predict(X_test)
 # accuracy and kappa score for evaluating performance
-accuracy = accuracy_score(y_test, y_test_hat)
-kappa = cohen_kappa_score(y_test, y_test_hat)
-print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.''')
+accuracy = accuracy_score(y_test, y_test_hat_rf_CC_kappa)
+kappa = cohen_kappa_score(y_test, y_test_hat_rf_CC_kappa)
+roc_auc = roc_auc_score(y_test, y_test_hat_rf_CC_kappa)
+print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a kappa score of {round(kappa,3)} and roc_auc of {round(roc_auc,3)}.''')
 # confusion matrix
-df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+df_confusion = pd.crosstab(y_test, y_test_hat_rf_CC_kappa, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+plot_confusion_matrix(df_confusion)
+#%%
+# Initialize
+rf_CC_bal = imblearn.ensemble.BalancedRandomForestClassifier()
+# Fit
+rf_CC_bal.fit(X_train, y_train)
+# Predict
+y_test_hat_CC_bal = rf_CC_bal.predict(X_test)
+# accuracy and kappa score for evaluating performance
+accuracy = accuracy_score(y_test, y_test_hat_CC_bal)
+kappa = cohen_kappa_score(y_test, y_test_hat_CC_bal)
+roc_auc = roc_auc_score(y_test, y_test_hat_CC_bal)
+print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a kappa score of {round(kappa,3)} and roc_auc of {round(roc_auc,3)}.''')
+# confusion matrix
+df_confusion = pd.crosstab(y_test, y_test_hat_CC_bal, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
 #%% oversampling and under sampling 
 # decision tree  on imbalanced dataset with SMOTE oversampling and random undersampling
-from numpy import mean
-from imblearn.pipeline import Pipeline
-from imblearn.over_sampling import SMOTE
-from imblearn.under_sampling import RandomUnderSampler
-from sklearn.model_selection import cross_val_score, RepeatedStratifiedKFold
 
 #%%
 # define pipeline
@@ -266,8 +293,7 @@ print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a
 df_confusion = pd.crosstab(y_test, y_test_hat_over, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
 #%%
-import imbalanced_learn as imblearn
-from imblearn.ensemble import BalancedRandomForestClassifier
+
 # Initialize
 rf = ensemble.BalancedRandomForestClassifier()
 
@@ -279,22 +305,7 @@ y_test_hat = rf.predict(X_test)
 accuracy = accuracy_score(y_test, y_test_hat)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 
-#%%
 
-def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
-    seaborn.heatmap(df_confusion, annot=True, fmt='d', cmap='Blues')
-    #plt.matshow(df_confusion, cmap=cmap) 
-    #plt.colorbar()
-    #tick_marks = np.arange(len(df_confusion.columns))
-    #plt.yticks(tick_marks, df_confusion.columns)
-    #plt.xticks(tick_marks, df_confusion.index)
-    #plt.ylabel(df_confusion.index.name)
-    #plt.xlabel(df_confusion.columns.name)
-    #for i in range(len(df_confusion.columns)):
-    #    for j in range(len(df_confusion.columns)):
-    #        plt.text(j,i, str(df_confusion[i][j]))
-
-#plot_confusion_matrix(df_confusion)
 #%% Question 1.2 Problem solving: CC B - Anders
 #todo
 
