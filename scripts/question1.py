@@ -14,10 +14,17 @@ import os
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn import svm, datasets
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
 from numpy import load
 import joblib
+from sklearn.metrics import accuracy_score
+from sklearn import ensemble # ensemble instead of tree
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import classification_report
+import seaborn
+#from sklearn.model_selection import RandomizedSearchCV
+from pprint import pprint
 
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
@@ -100,23 +107,18 @@ accuracy_poly_best = accuracy_score(y_val_hat_poly_best, y_test)
 print(f'Optimized polynomial SVM achieved {round(accuracy_poly_best * 100, 1)}% accuracy on C.')
 
 #%% Question 1.2 Problem solving: CC RF
-from sklearn.metrics import accuracy_score
-from sklearn import ensemble # ensemble instead of tree
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-from sklearn.metrics import classification_report
-import seaborn
 #%%
 # Initialize
 rf = ensemble.RandomForestClassifier(random_state=(42))
 
 # Fit
-rf.fit(X_train_CC, y_train_CC)
+rf.fit(X_train, y_train)
 
 # Predict
-y_test_hat_std = rf.predict(X_test_CC)
-accuracy = accuracy_score(y_test_CC, y_test_hat_std)
+y_test_hat_std = rf.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_std)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
-df_confusion = pd.crosstab(y_test_CC, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+df_confusion = pd.crosstab(y_test, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
 #%%
 
@@ -124,11 +126,11 @@ plot_confusion_matrix(df_confusion)
 rf = ensemble.RandomForestClassifier(class_weight='balanced', random_state=(42))
 
 # Fit
-rf.fit(X_train_CC, y_train_CC)
+rf.fit(X_train, y_train)
 
 # Predict
-y_test_hat_bal = rf.predict(X_test_CC)
-accuracy = accuracy_score(y_test_CC, y_test_hat_bal)
+y_test_hat_bal = rf.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_bal)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 
 #%%
@@ -136,11 +138,11 @@ print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy
 rf = ensemble.RandomForestClassifier(class_weight='balanced_subsample', random_state=(42))
 
 # Fit
-rf.fit(X_train_CC, y_train_CC)
+rf.fit(X_train, y_train)
 
 # Predict
-y_test_hat_sub = rf.predict(X_test_CC)
-accuracy = accuracy_score(y_test_CC, y_test_hat_sub)
+y_test_hat_sub = rf.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_sub)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 #%%
 import imbalanced_learn as imblearn
@@ -149,15 +151,15 @@ from imblearn.ensemble import BalancedRandomForestClassifier
 rf = ensemble.BalancedRandomForestClassifier()
 
 # Fit
-rf.fit(X_train_CC, y_train_CC)
+rf.fit(X_train, y_train)
 
 # Predict
-y_test_hat = rf.predict(X_test_CC)
-accuracy = accuracy_score(y_test_CC, y_test_hat)
+y_test_hat = rf.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 
 #%%, cmap='spring'
-df_confusion = pd.crosstab(y_test_CC, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+#df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
     seaborn.heatmap(df_confusion, annot=True, fmt='d')
     #plt.matshow(df_confusion, cmap=cmap) 
@@ -171,23 +173,23 @@ def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
     #    for j in range(len(df_confusion.columns)):
     #        plt.text(j,i, str(df_confusion[i][j]))
 
-plot_confusion_matrix(df_confusion)
+#plot_confusion_matrix(df_confusion)
 #%% Question 1.2 Problem solving: CC B
 #todo
 gbt = ensemble.HistGradientBoostingClassifier()
 
 # Fit
-gbt.fit(X_train_CC, y_train_CC)
+gbt.fit(X_train, y_train)
 
 # Predict
-y_test_hat = gbt.predict(X_test_CC)
-accuracy = accuracy_score(y_test_CC, y_test_hat)
+y_test_hat = gbt.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat)
 print(f'''Gradient boosted DTs with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
-df_confusion = pd.crosstab(y_test_CC, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
 #%% Question 1.2 Problem solving: D
 #%% Question 1.2 Problem solving: D SVM
-#%% Question 1.2 Problem solving: D SVM gridsearch
+#%% Question 1.2 Problem solving: D SVM gridsearch - Scoring: balanced_accuracy
 parameters = {'kernel':('rbf', 'linear', 'poly'), 'C':[1, 10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr', 'ovo']}
 svc = svm.SVC()
 svm_D = GridSearchCV(svc, 
@@ -200,7 +202,22 @@ results = pd.DataFrame(svm_D.cv_results_)
 print(results[results['mean_test_score'] == results['mean_test_score'].min()])
 
 #%% Question 1.2 Problem solving: D SVM gridsearch - Save results
-joblib.dump(svm_D, 'data/q12svmD.pkl')
+joblib.dump(svm_D, 'data/q12svmD_bacc.pkl')
+
+#%% Question 1.2 Problem solving: D SVM gridsearch - Scoring: accuracy
+parameters = {'kernel':('rbf', 'linear', 'poly'), 'C':[1, 10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr', 'ovo']}
+svc = svm.SVC()
+svm_D = GridSearchCV(svc, 
+                   parameters,
+                   n_jobs=-1, # number of simultaneous jobs (-1 all cores)
+                   scoring='accuracy')
+svm_D.fit(np.concatenate((X_train, X_val), axis=0), np.concatenate((y_train, y_val), axis=0))
+
+results = pd.DataFrame(svm_D.cv_results_)
+print(results[results['mean_test_score'] == results['mean_test_score'].min()])
+
+#%% Question 1.2 Problem solving: D SVM gridsearch - Save results
+joblib.dump(svm_D, 'data/q12svmD_acc.pkl')
 
 #%% Question 1.2 Problem solving: D RF
 #todo
@@ -208,21 +225,74 @@ joblib.dump(svm_D, 'data/q12svmD.pkl')
 rf = ensemble.RandomForestClassifier(random_state=(42))
 
 # Fit
-rf.fit(X_train_D, y_train_D)
+rf.fit(X_train, y_train)
 
 # Predict
-y_test_hat_std = rf.predict(X_test_D)
-accuracy = accuracy_score(y_test_D, y_test_hat_std)
+y_test_hat_std = rf.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_std)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
-print(confusion_matrix(y_test_D, y_test_hat_std))
-df_confusion = pd.crosstab(y_test_D, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
-df_confusion = df_confusion.reindex(columns=[0,1,2,3,4,5], fill_value=0)
+print(confusion_matrix(y_test, y_test_hat_std))
+df_confusion = pd.crosstab(y_test, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+df_confusion = df_confusion.reindex(columns=[0,1,2,3,4,10], fill_value=0)
 plot_confusion_matrix(df_confusion)
+#%%
+
+# Number of trees in random forest
+n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
+# Number of features to consider at every split
+max_features = ['auto', 'log2'] # auto = sqrt(n_features), log2 = log2(n_features)
+# Maximum number of levels in tree
+max_depth = [int(x) for x in np.linspace(10, 110, num = 11)]
+max_depth.append(None)
+# Minimum number of samples required to split a node
+min_samples_split = [2, 5, 10]
+# Minimum number of samples required at each leaf node
+min_samples_leaf = [1, 2, 4]
+# Method of selecting samples for training each tree
+bootstrap = [True]
+#
+class_weight=['balanced_subsample','balanced', None]
+# Create the random grid
+random_grid = {'n_estimators': n_estimators,
+               'max_features': max_features,
+               'max_depth': max_depth,
+               'min_samples_split': min_samples_split,
+               'min_samples_leaf': min_samples_leaf,
+               'bootstrap': bootstrap,
+               'class_weight': class_weight}
+pprint(random_grid)
+#%%
+# Use the random grid to search for best hyperparameters
+# First create the base model to tune
+rf = ensemble.RandomForestClassifier()
+# Random search of parameters, using 3 fold cross validation, 
+# search across 100 different combinations, and use all available cores
+rf_random = RandomizedSearchCV(rf, random_grid, n_iter = 10, cv = 3, verbose=2, random_state=42, n_jobs = -1)
+# Fit the random search model
+rf_random.fit(X_train, y_train)
+
+rf_random.best_params_
+y_test_hat_std = rf_random.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_std)
+print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy.''')
+df_confusion = pd.crosstab(y_test, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+df_confusion = df_confusion.reindex(columns=[0,1,2,3,4,10], fill_value=0)
+plot_confusion_matrix(df_confusion)
+#%%
+best_random = rf_random.best_estimator_
+random_accuracy = evaluate(best_random, test_features, test_labels)
 #%% Question 1.2 Problem solving: D B
-#todo
+gbt_D = ensemble.HistGradientBoostingClassifier(random_state=(42))
 
-print(df.groupby('D').size())
+# Fit
+gbt.fit(X_train, y_train)
 
+# Predict
+y_test_hat_D = gbt_D.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat)
+print(f'''Gradient boosted DTs with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
+df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+plot_confusion_matrix(df_confusion)
 #%% Question 1.2 Problem solving: Y
 #%% Question 1.2 Problem solving: Y SVM
 #%% Question 1.2 Problem solving: Y SVM gridsearch
