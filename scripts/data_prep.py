@@ -32,7 +32,14 @@ df['CC'] = np.select([(df[1]<1900) & (df[1]>1799)], [0], default=1)
 df['D'] = np.select([(df[1].astype(str).str.len()>1) & (df[1].astype(str).str.len()<5)], [df[1].astype(str).str[-2].astype(int)], default=10)
 df['Y'] = np.select([(df[1].astype(str).str.len()>1) & (df[1].astype(str).str.len()<5)], [df[1].astype(str).str[-1].astype(int)], default=10)
 
-#%%
+#%% Plotting class distributions
+sns.histplot(df['CC'])
+plt.figure()
+sns.histplot(df['D'])
+plt.figure()
+sns.histplot(df['Y'])
+
+#%% reassign 5,6,7,8,9 to class 10 in D
 df.loc[df.D > 4, 'D'] = 10
 
 #%% Prettyfying dataframe

@@ -151,6 +151,7 @@ rf.fit(X_train, y_train)
 
 # Predict
 y_test_hat_std = rf.predict(X_test)
+
 # accuracy and kappa score for evaluating performance
 accuracy = accuracy_score(y_test, y_test_hat_std)
 kappa = cohen_kappa_score(y_test, y_test_hat_std)
@@ -214,6 +215,7 @@ from imblearn.pipeline import Pipeline
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn.model_selection import cross_val_score, RepeatedStratifiedKFold
+
 #%%
 # define pipeline
 model = ensemble.RandomForestClassifier(random_state=42)
@@ -263,9 +265,22 @@ print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a
 # confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_over, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+#%%
+import imbalanced_learn as imblearn
+from imblearn.ensemble import BalancedRandomForestClassifier
+# Initialize
+rf = ensemble.BalancedRandomForestClassifier()
 
-#%% - Anders
-#df_confusion = pd.crosstab(y_test_CC, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+# Fit
+rf.fit(X_train, y_train)
+
+# Predict
+y_test_hat = rf.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat)
+print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
+
+#%%
+
 def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
     seaborn.heatmap(df_confusion, annot=True, fmt='d', cmap='Blues')
     #plt.matshow(df_confusion, cmap=cmap) 
@@ -286,14 +301,15 @@ def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
 gbt = ensemble.HistGradientBoostingClassifier(random_state=42)
 
 # Fit
-gbt.fit(X_train_CC, y_train_CC)
+gbt.fit(X_train, y_train)
 
 # Predict
-y_test_hat = gbt.predict(X_test_CC)
-accuracy = accuracy_score(y_test_CC, y_test_hat)
-kappa = cohen_kappa_score(y_test_CC, y_test_hat)
+
+y_test_hat = gbt.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat)
+kappa = cohen_kappa_score(y_test, y_test_hat)
 print(f'''Gradient boosted DTs with default settings achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,1)}.''')
-df_confusion = pd.crosstab(y_test_CC, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
 #%% Question 1.2 Problem solving: D
 #%% Question 1.2 Problem solving: D SVM
@@ -310,22 +326,8 @@ results = pd.DataFrame(svm_D.cv_results_)
 print(results[results['mean_test_score'] == results['mean_test_score'].min()])
 
 #%% Question 1.2 Problem solving: D SVM gridsearch - Save results
-joblib.dump(svm_D, 'data/q12svmD_bacc.pkl')
+joblib.dump(svm_D, 'data/q12svmD.pkl')
 
-#%% Question 1.2 Problem solving: D SVM gridsearch - Scoring: accuracy
-parameters = {'kernel':('rbf', 'linear', 'poly'), 'C':[1, 10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr', 'ovo']}
-svc = svm.SVC()
-svm_D = GridSearchCV(svc, 
-                   parameters,
-                   n_jobs=-1, # number of simultaneous jobs (-1 all cores)
-                   scoring='accuracy')
-svm_D.fit(np.concatenate((X_train, X_val), axis=0), np.concatenate((y_train, y_val), axis=0))
-
-results = pd.DataFrame(svm_D.cv_results_)
-print(results[results['mean_test_score'] == results['mean_test_score'].min()])
-
-#%% Question 1.2 Problem solving: D SVM gridsearch - Save results
-joblib.dump(svm_D, 'data/q12svmD_acc.pkl')
 
 #%% Question 1.2 Problem solving: D RF
 #todo
@@ -333,14 +335,14 @@ joblib.dump(svm_D, 'data/q12svmD_acc.pkl')
 rf = ensemble.RandomForestClassifier(random_state=(42))
 
 # Fit
-rf.fit(X_train_D, y_train_D)
+rf.fit(X_train, y_train)
 
 # Predict
-y_test_hat_std = rf.predict(X_test_D)
-accuracy = accuracy_score(y_test_D, y_test_hat_std)
+y_test_hat_std = rf.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_std)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
-print(confusion_matrix(y_test_D, y_test_hat_std))
-df_confusion = pd.crosstab(y_test_D, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+print(confusion_matrix(y_test, y_test_hat_std))
+df_confusion = pd.crosstab(y_test, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 df_confusion = df_confusion.reindex(columns=[0,1,2,3,4,10], fill_value=0)
 plot_confusion_matrix(df_confusion)
 
@@ -352,14 +354,15 @@ rf = ensemble.RandomForestClassifier(random_state=42)
 # search across 100 different combinations, and use all available cores
 rf_random = RandomizedSearchCV(rf, random_grid_RF, n_iter = 10, cv = 3, verbose=2, random_state=42, n_jobs = -1, scoring=kappa_scorer)
 # Fit the random search model
-rf_random.fit(X_train_D, y_train_D)
+rf_random.fit(X_train, y_train)
 
 rf_random.best_params_
-y_test_hat_std = rf_random.predict(X_test_D)
-accuracy = accuracy_score(y_test_D, y_test_hat_std)
-kappa = cohen_kappa_score(y_test_D, y_test_hat_std)
+
+y_test_hat_std = rf_random.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_std)
+kappa = cohen_kappa_score(y_test, y_test_hat_std)
 print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,1)}.''')
-df_confusion = pd.crosstab(y_test_D, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+df_confusion = pd.crosstab(y_test, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 df_confusion = df_confusion.reindex(columns=[0,1,2,3,4,10], fill_value=0)
 plot_confusion_matrix(df_confusion)
 #%%
@@ -369,13 +372,13 @@ random_accuracy = evaluate(best_random, test_features, test_labels)
 gbt_D = ensemble.HistGradientBoostingClassifier(random_state=(42), loss='categorical_crossentropy')
 
 # Fit
-gbt_D.fit(X_train_D, y_train_D)
+gbt_D.fit(X_train, y_train)
 
 # Predict
-y_test_hat_D = gbt_D.predict(X_test_D)
-accuracy = accuracy_score(y_test_D, y_test_hat_D)
+y_test_hat_D = gbt_D.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat)
 print(f'''Gradient boosted DTs with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
-df_confusion = pd.crosstab(y_test_D, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
 #%%
 gb_D = ensemble.HistGradientBoostingClassifier(random_state=42,loss='categorical_crossentropy')
@@ -383,11 +386,11 @@ gb_D = ensemble.HistGradientBoostingClassifier(random_state=42,loss='categorical
 # search across 100 different combinations, and use all available cores
 gb_random_D = RandomizedSearchCV(gb_D, random_grid_GB, n_iter = 10, cv = 3, random_state=42, n_jobs = -1)
 # Fit the random search model
-gb_random_D.fit(X_train_D, y_train_D)
+gb_random_D.fit(X_train, y_train)
 
 gb_random.best_params_
-y_test_hat_D_gb = gb_random.predict(X_test_D)
-accuracy = accuracy_score(y_test_D, y_test_hat_D_gb)
+y_test_hat_D_gb = gb_random.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_D_gb)
 #%% Question 1.2 Problem solving: Y
 metrics.cohen_kappa_score
 #%% Question 1.2 Problem solving: Y SVM
@@ -397,7 +400,7 @@ svc = svm.SVC()
 svm_Y = GridSearchCV(svc, 
                    parameters,
                    n_jobs=-1, # number of simultaneous jobs (-1 all cores)
-                   scoring='balanced_accuracy')
+                   scoring='accuracy')
 svm_Y.fit(np.concatenate((X_train, X_val), axis=0), np.concatenate((y_train, y_val), axis=0))
 
 results = pd.DataFrame(svm_Y.cv_results_)

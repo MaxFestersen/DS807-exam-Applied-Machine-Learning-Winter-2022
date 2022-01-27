@@ -13,11 +13,9 @@ from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.metrics import AUC
 import datetime
 from sklearn.utils import class_weight 
 import os
-
 
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
@@ -48,42 +46,48 @@ val_gen = datagen.flow_from_directory('data/split/CC/val',
 
 test_gen = datagen.flow_from_directory('data/split/CC/test',
                                        batch_size=batch_size,
+                                       shuffle=True,
+                                       seed=1234,
                                        class_mode='binary',
-                                       color_mode='grayscale')
+                                       color_mode='grayscale',
+                                       target_size=(32, 62))
 
 input_shape=(32, 62, 1)
 
 STEP_SIZE_TRAIN=train_gen.n//train_gen.batch_size
 STEP_SIZE_VALID=val_gen.n//val_gen.batch_size
+STEP_SIZE_TEST=test_gen.n//test_gen.batch_size
 
 #%% Setting up hyperparameter tuning
-HP_NUM_UNITS_1 = hp.HParam('num_units_1', hp.Discrete([8,16]))
-HP_NUM_UNITS_2 = hp.HParam('num_units_2', hp.Discrete([16,32]))
-HP_NUM_UNITS_3 = hp.HParam('num_units_3', hp.Discrete([128,256]))
+HP_NUM_UNITS_1 = hp.HParam('num_units_1', hp.Discrete([8,16,32]))
+HP_NUM_UNITS_2 = hp.HParam('num_units_2', hp.Discrete([16,32,64]))
+HP_NUM_UNITS_3 = hp.HParam('num_units_3', hp.Discrete([128,256,512]))
 HP_ACT_FUNC = hp.HParam('activation_func', hp.Discrete(['relu', 'tanh']))
+HP_ACT_FUNC_2 = hp.HParam('activation_func_2', hp.Discrete(['relu', 'tanh']))
 HP_OPTIMIZER = hp.HParam('optimizer', hp.Discrete(['adam', 'sgd']))
 
 METRIC_PRC = tf.keras.metrics.AUC(name='prc', curve='PR')
 METRIC_ACC = 'accuracy'
 
-with tf.summary.create_file_writer('logs/hparam_tuning').as_default():
+with tf.summary.create_file_writer('logs/hparam_tuning_CC').as_default():
     hp.hparams_config(
-        hparams=[HP_NUM_UNITS_1, HP_NUM_UNITS_2, HP_NUM_UNITS_3, HP_ACT_FUNC, HP_OPTIMIZER],
-        metrics=[hp.Metric(METRIC_PRC.name, display_name=METRIC_PRC.name), hp.Metric(METRIC_ACC, display_name='Accuracy')],
+        hparams=[HP_NUM_UNITS_1, HP_NUM_UNITS_2, HP_NUM_UNITS_3, HP_ACT_FUNC, HP_ACT_FUNC_2, HP_OPTIMIZER],
+        metrics=[hp.Metric(METRIC_PRC.name, display_name=METRIC_PRC.name), 
+                 hp.Metric(METRIC_ACC, display_name='Accuracy')],
     )
 
 def train_model(hparams):
     model = Sequential([
         Conv2D(hparams[HP_NUM_UNITS_1], (3,3), activation=hparams[HP_ACT_FUNC], input_shape=input_shape),
         MaxPooling2D(2,2),
-        Conv2D(hparams[HP_NUM_UNITS_2], (3,3), activation=hparams[HP_ACT_FUNC]),
+        Conv2D(hparams[HP_NUM_UNITS_2], (3,3), activation=hparams[HP_ACT_FUNC_2]),
         Flatten(),
         Dense(hparams[HP_NUM_UNITS_3], activation=hparams[HP_ACT_FUNC]),
         Dense(1, activation='sigmoid')
     ])
     model.compile(
         optimizer=hparams[HP_OPTIMIZER],
-        loss='binary_crossentropy',
+        loss=tf.keras.losses.BinaryCrossentropy(from_logits=True, name='binary_crossentropy'),
         metrics=[METRIC_PRC, 'accuracy'],
     )
     
@@ -97,8 +101,12 @@ def train_model(hparams):
     model.fit(train_gen, 
               epochs=10,
               steps_per_epoch=STEP_SIZE_TRAIN,
+              validation_data=val_gen,
+              validation_steps=STEP_SIZE_VALID,
               class_weight=train_class_weights)
+    
     _, prc, accuracy = model.evaluate(val_gen, steps=STEP_SIZE_VALID)
+    del model
     return prc, accuracy
 
 def run(run_dir, hparams):
@@ -106,7 +114,7 @@ def run(run_dir, hparams):
         hp.hparams(hparams)
         prc, accuracy = train_model(hparams)
         tf.summary.scalar(METRIC_PRC.name, prc, step=1)
-        tf.summary.scaler(METRIC_ACC, accuracy, step=1)
+        tf.summary.scalar(METRIC_ACC, accuracy, step=1)
 
 #%% Running hyperparameter tuning
 
@@ -116,19 +124,22 @@ for num_units_1 in HP_NUM_UNITS_1.domain.values:
     for num_units_2 in HP_NUM_UNITS_2.domain.values:
         for num_units_3 in HP_NUM_UNITS_3.domain.values:
             for activation in HP_ACT_FUNC.domain.values:
-                for optimizer in HP_OPTIMIZER.domain.values:
-                    hparams = {
-                        HP_NUM_UNITS_1: num_units_1,
-                        HP_NUM_UNITS_2: num_units_2,
-                        HP_NUM_UNITS_3: num_units_3,
-                        HP_ACT_FUNC: activation,
-                        HP_OPTIMIZER: optimizer,
-                    }
-                    run_name = "run-%d" % session_num
-                    print('--- Starting trail: %s' % run_name)
-                    print({h.name: hparams[h] for h in hparams})
-                    run('logs/hparam_tuning/' + run_name, hparams)
-                    session_num += 1
+                for activation_2 in HP_ACT_FUNC_2.domain.values:
+                    for optimizer in HP_OPTIMIZER.domain.values:
+                        tf.keras.backend.clear_session()
+                        hparams = {
+                            HP_NUM_UNITS_1: num_units_1,
+                            HP_NUM_UNITS_2: num_units_2,
+                            HP_NUM_UNITS_3: num_units_3,
+                            HP_ACT_FUNC: activation,
+                            HP_ACT_FUNC_2: activation_2,
+                            HP_OPTIMIZER: optimizer,
+                        }
+                        run_name = "run-%d" % session_num
+                        print('--- Starting trail: %s' % run_name)
+                        print({h.name: hparams[h] for h in hparams})
+                        run('logs/hparam_tuning_CC/' + run_name, hparams)
+                        session_num += 1
 
 #%% final model (not decided yet)
 modelCC = Sequential([
