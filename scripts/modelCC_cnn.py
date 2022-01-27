@@ -130,25 +130,25 @@ def run(run_dir, hparams):
 session_num = 0
 
 for num_filt in HP_NUM_FILT.domain.values:
-        for num_units in HP_NUM_UNITS.domain.values:
-            for activation in HP_ACT_FUNC.domain.values:
-                for activation_2 in HP_ACT_FUNC_2.domain.values:
-                    for optimizer in HP_OPTIMIZER.domain.values:
-                        for dropout_rate in tf.linspace(HP_DROPOUT.domain.min_value, HP_DROPOUT.domain.max_value, 3):
-                                tf.keras.backend.clear_session()
-                                hparams = {
-                                    HP_NUM_FILT: num_filt,
-                                    HP_NUM_UNITS: num_units,
-                                    HP_ACT_FUNC: activation,
-                                    HP_ACT_FUNC_2: activation_2,
-                                    HP_OPTIMIZER: optimizer,
-                                    HP_DROPOUT: float("%.2f"%float(dropout_rate)),
-                                }
-                                run_name = "run-%d" % session_num
-                                print('--- Starting trail: %s' % run_name)
-                                print({h.name: hparams[h] for h in hparams})
-                                run('logs/hparam_tuning_CC/' + run_name, hparams)
-                                session_num += 1
+    for num_units in HP_NUM_UNITS.domain.values:
+        for activation in HP_ACT_FUNC.domain.values:
+            for activation_2 in HP_ACT_FUNC_2.domain.values:
+                for optimizer in HP_OPTIMIZER.domain.values:
+                    for dropout_rate in tf.linspace(HP_DROPOUT.domain.min_value, HP_DROPOUT.domain.max_value, 3):
+                        tf.keras.backend.clear_session()
+                        hparams = {
+                            HP_NUM_FILT: num_filt,
+                            HP_NUM_UNITS: num_units,
+                            HP_ACT_FUNC: activation,
+                            HP_ACT_FUNC_2: activation_2,
+                            HP_OPTIMIZER: optimizer,
+                            HP_DROPOUT: float("%.2f"%float(dropout_rate)),
+                            }
+                        run_name = "run-%d" % session_num
+                        print('--- Starting trail: %s' % run_name)
+                        print({h.name: hparams[h] for h in hparams})
+                        run('logs/hparam_tuning_CC_reg/' + run_name, hparams)
+                        session_num += 1
 
 #%% final model (not decided yet)
 def final_model(num_units_1, num_units_2, num_units_3, act_func_1, act_func_2):

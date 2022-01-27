@@ -14,7 +14,7 @@ import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorboard.plugins.hparams import api as hp
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
+from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import datetime
@@ -60,32 +60,34 @@ STEP_SIZE_TRAIN=train_gen.n//train_gen.batch_size
 STEP_SIZE_VALID=val_gen.n//val_gen.batch_size
 
 #%% Setting up hyperparameter tuning
-HP_NUM_UNITS_1 = hp.HParam('num_units_1', hp.Discrete([8,16,32]))
-HP_NUM_UNITS_2 = hp.HParam('num_units_2', hp.Discrete([16,32,64]))
-HP_NUM_UNITS_3 = hp.HParam('num_units_3', hp.Discrete([128,256,512]))
+HP_NUM_FILTS = hp.HParam('num_filts', hp.Discrete([8,16,32]))
+HP_NUM_UNITS = hp.HParam('num_units', hp.Discrete([128,256,512]))
 HP_ACT_FUNC = hp.HParam('activation_func', hp.Discrete(['relu', 'tanh']))
 HP_ACT_FUNC_2 = hp.HParam('activation_func_2', hp.Discrete(['relu', 'tanh']))
 HP_OPTIMIZER = hp.HParam('optimizer', hp.Discrete(['adam', 'sgd']))
+HP_DROPOUT = hp.HParam("dropout", hp.RealInterval(0., 0.4))
 
 METRIC_PRC = tf.keras.metrics.AUC(name='prc', curve='PR')
 METRIC_ROC = tf.keras.metrics.AUC(name='ROC', curve='ROC')
 METRIC_ACC = 'accuracy'
 
-with tf.summary.create_file_writer('logs/hparam_tuning_Y').as_default():
+with tf.summary.create_file_writer('logs/hparam_tuning_Y_reg').as_default():
     hp.hparams_config(
-        hparams=[HP_NUM_UNITS_1, HP_NUM_UNITS_2, HP_NUM_UNITS_3, HP_ACT_FUNC, HP_ACT_FUNC_2, HP_OPTIMIZER],
+        hparams=[HP_NUM_FILTS, HP_NUM_UNITS, HP_ACT_FUNC, HP_ACT_FUNC_2, HP_OPTIMIZER],
         metrics=[hp.Metric(METRIC_PRC.name, display_name=METRIC_PRC.name), 
                  hp.Metric(METRIC_ACC, display_name='Accuracy'),
                  hp.Metric(METRIC_ROC.name, display_name=METRIC_ROC.name)],
     )
 
 def train_model(hparams):
+    num_filts = int(hparams[HP_NUM_FILTS])
     model = Sequential([
-        Conv2D(hparams[HP_NUM_UNITS_1], (3,3), activation=hparams[HP_ACT_FUNC], input_shape=input_shape),
+        Conv2D(num_filts, (3,3), activation=hparams[HP_ACT_FUNC], input_shape=input_shape),
         MaxPooling2D(2,2),
-        Conv2D(hparams[HP_NUM_UNITS_2], (3,3), activation=hparams[HP_ACT_FUNC_2]),
+        Conv2D(num_filts*2, (3,3), activation=hparams[HP_ACT_FUNC_2]),
         Flatten(),
-        Dense(hparams[HP_NUM_UNITS_3], activation=hparams[HP_ACT_FUNC]),
+        Dense(hparams[HP_NUM_UNITS], activation=hparams[HP_ACT_FUNC]),
+        Dropout(hparams[HP_DROPOUT]),
         Dense(11, activation='softmax')
     ])
     model.compile(
@@ -123,25 +125,25 @@ def run(run_dir, hparams):
 
 session_num = 0
 
-for num_units_1 in HP_NUM_UNITS_1.domain.values:
-    for num_units_2 in HP_NUM_UNITS_2.domain.values:
-        for num_units_3 in HP_NUM_UNITS_3.domain.values:
-            for activation in HP_ACT_FUNC.domain.values:
-                for activation_2 in HP_ACT_FUNC_2.domain.values:
-                    for optimizer in HP_OPTIMIZER.domain.values:
+for num_filts in HP_NUM_FILTS.domain.values:
+    for num_units in HP_NUM_UNITS.domain.values:
+        for activation in HP_ACT_FUNC.domain.values:
+            for activation_2 in HP_ACT_FUNC_2.domain.values:
+                for optimizer in HP_OPTIMIZER.domain.values:
+                    for dropout_rate in tf.linspace(HP_DROPOUT.domain.min_value, HP_DROPOUT.domain.max_value, 3):
                         tf.keras.backend.clear_session()
                         hparams = {
-                            HP_NUM_UNITS_1: num_units_1,
-                            HP_NUM_UNITS_2: num_units_2,
-                            HP_NUM_UNITS_3: num_units_3,
+                            HP_NUM_FILTS: num_filts,
+                            HP_NUM_UNITS: num_units,
                             HP_ACT_FUNC: activation,
                             HP_ACT_FUNC_2: activation_2,
                             HP_OPTIMIZER: optimizer,
+                            HP_DROPOUT: float("%.2f"%float(dropout_rate)),
                         }
                         run_name = "run-%d" % session_num
                         print('--- Starting trail: %s' % run_name)
                         print({h.name: hparams[h] for h in hparams})
-                        run('logs/hparam_tuning_Y/' + run_name, hparams)
+                        run('logs/hparam_tuning_Y_reg/' + run_name, hparams)
                         session_num += 1
 
 #%% final model (not decided yet)
