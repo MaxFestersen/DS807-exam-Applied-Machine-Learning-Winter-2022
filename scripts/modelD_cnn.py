@@ -8,7 +8,10 @@ Created on Mon Jan 24 16:42:42 2022
 
 #%% Importing libraries
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 import tensorflow as tf
+import tensorflow_addons as tfa
 from tensorboard.plugins.hparams import api as hp
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
@@ -17,6 +20,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import datetime
 from sklearn.utils import class_weight 
 import os
+import seaborn as sns
 
 
 # Set path to parrent location of current file
@@ -46,7 +50,11 @@ val_gen = datagen.flow_from_directory('data/split/D/val',
                                       color_mode='grayscale',
                                       target_size=(32, 62))
 
-test_gen = datagen.flow_from_directory('data/split/D/test')
+test_gen = datagen.flow_from_directory('data/split/D/test',
+                                       class_mode='categorical',
+                                       color_mode='grayscale',
+                                       target_size=(32, 62),
+                                       shuffle=False)
 
 input_shape=(32, 62, 1)
 
@@ -133,27 +141,32 @@ for num_units_1 in HP_NUM_UNITS_1.domain.values:
                         session_num += 1
 
 #%% final model (not decided yet)
-modelD = Sequential([
-    Conv2D(16, (3,3), activation='relu', input_shape=input_shape, name='conv_1'),
-    Conv2D(32, (3,3), activation='relu', name='conv_2'),
-    MaxPooling2D(2,2),
-    Conv2D(32, (3,3), activation='relu', name='conv_3'),
-    Conv2D(64, (3,3), activation='relu', name='conv_4'),
-    Flatten(),
-    Dense(128, activation='relu'),
-    Dense(6, activation='softmax')
-])
+def final_model(num_units_1, num_units_2, num_units_3, act_func_1, act_func_2):
+    modelD = Sequential([
+        Conv2D(num_units_1, (3,3), activation=act_func_1, input_shape=input_shape, name='conv_1'),
+        MaxPooling2D(2,2),
+        Conv2D(num_units_2, (3,3), activation=act_func_2, name='conv_2'),
+        Flatten(),
+        Dense(num_units_3, activation=act_func_1),
+        Dense(6, activation='sigmoid')
+    ])
 
-modelD.compile(
-    loss='categorical_crossentropy',
-    optimizer='adam',
-    metrics=['accuracy'])
+    METRICS = [
+        tf.keras.metrics.BinaryAccuracy(name='accuracy'),
+        tf.keras.metrics.AUC(name='prc', curve='PR'), # precision-recall curve
+        tfa.metrics.CohenKappa(num_classes=6, name='kappa')
+    ]
 
-modelD.summary()
+    modelD.compile(
+        loss='categorical_crossentropy',
+        optimizer='adam',
+        metrics=METRICS)
+
+    return modelD
 
 #%% Callbacks
-tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="./logs", histogram_freq=1)  # tensorboard --logdir ./logs
-log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+log_dir = "logs/fit_D/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)  # tensorboard --logdir ./logs
 
 checkpoint_filepath = './checkpoints/checkpoint-modelD'
 
@@ -185,10 +198,70 @@ train_class_weights = dict(enumerate(class_weights))
 STEP_SIZE_TRAIN=train_gen.n//train_gen.batch_size
 STEP_SIZE_VALID=val_gen.n//val_gen.batch_size
 
-modelD.fit(train_gen,
+modelD = final_model(32, 64, 512, 'relu', 'tanh')
+
+hist = modelD.fit(train_gen,
             steps_per_epoch=STEP_SIZE_TRAIN,
             validation_data=val_gen,
             validation_steps=STEP_SIZE_VALID,
             epochs=100,
-            callbacks=[tensorboard_callback, modelCheckpoint, earlyStop, reduceLR],
-            class_weight=train_class_weights)
+            callbacks=[tensorboard_callback, modelCheckpoint, earlyStop])
+
+#%% Evaluation
+modelD.load_weights(checkpoint_filepath)
+modelD.evaluate(test_gen) #accuracy 0.8784
+
+#%%
+modelD.save('models/modelD')
+
+#%%
+def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
+    sns.heatmap(df_confusion, annot=True, fmt='d', cmap='Blues')
+
+y_test_hat = np.argmax(modelD.predict(test_gen), axis=1).flatten()
+df_confusion = pd.crosstab(test_gen.classes, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+
+plot_confusion_matrix(df_confusion)
+
+#%% Plotting model
+best_epoch = np.argmax(hist.history['val_accuracy'])
+
+plt.plot(hist.history['accuracy'])
+plt.plot(hist.history['val_accuracy'])
+plt.axvline(x=best_epoch)
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('plots/modelD_acc.png', dpi=300)
+plt.show()
+
+plt.plot(hist.history['prc'])
+plt.plot(hist.history['val_prc'])
+plt.axvline(x=best_epoch)
+plt.title('model PRc')
+plt.ylabel('Precision-Recall curve')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('plots/modelD_prc.png', dpi=300)
+plt.show()
+
+plt.plot(hist.history['loss'])
+plt.plot(hist.history['val_loss'])
+plt.axvline(x=best_epoch)
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('plots/modelD_loss.png', dpi=300)
+plt.show()
+
+plt.plot(hist.history['kappa'])
+plt.plot(hist.history['val_kappa'])
+plt.axvline(x=best_epoch)
+plt.title('model kappa')
+plt.ylabel('kappa')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('plots/modelD_kappa.png', dpi=300)
+plt.show()
