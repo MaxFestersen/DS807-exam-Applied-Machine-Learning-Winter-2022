@@ -478,7 +478,7 @@ predictions = svm_CC_gridsearch_res.predict(X_test)
 accuracy = accuracy_score(y_test, predictions)
 kappa = cohen_kappa_score(y_test, predictions)
 roc = roc_auc_score(y_test, predictions)
-print(f'SVM for CC achieved: {round(accuracy * 100, 1)}% accuracy, a kappa score of {round(kappa,2)}, roc score of {round(roc,2)}.')
+print(f'SVM for CC achieved: {round(accuracy * 100, 1)}% accuracy, a kappa score of {round(kappa,2)} & roc score of {round(roc,2)}.')
 
 if df_scores.loc[df_scores['Method_Category'] == "SVM CC"].empty:
     print("Adding.")
@@ -488,6 +488,7 @@ if df_scores.loc[df_scores['Method_Category'] == "SVM CC"].empty:
 else:
     print("Updating.")
     df_scores.loc[df_scores['Method_Category'] == "SVM CC"] = "SVM CC", accuracy, kappa, roc
+    df_scores.to_csv("scores/nondeep.csv", index=False)
 
 #%% Question 1.2 Performance: D
 svm_D_gridsearch_res = joblib.load("data/q12svmD.pkl")
@@ -500,9 +501,8 @@ proba_pred = svm_D_gridsearch_res.predict_proba(X_test)
 # accuracy and kappa score for evaluating performance
 accuracy = accuracy_score(y_test, predictions)
 kappa = cohen_kappa_score(y_test, predictions)
-roc = roc_auc_score(y_test, , multi_class="ovr")
-roc_auc_score(y, proba_pred, multi_class='ovr')
-print(f'SVM for D achieved: {round(accuracy * 100, 1)}% accuracy, a kappa score of {round(kappa,2)}, roc score of {round(roc,2)}.')
+roc = roc_auc_score(y_test, proba_pred, multi_class="ovr")
+print(f'SVM for D achieved: {round(accuracy * 100, 1)}% accuracy, a kappa score of {round(kappa,2)} & roc score of {round(roc,2)}.')
 
 if df_scores.loc[df_scores['Method_Category'] == "SVM D"].empty:
     print("Adding.")
@@ -512,6 +512,7 @@ if df_scores.loc[df_scores['Method_Category'] == "SVM D"].empty:
 else:
     print("Updating.")
     df_scores.loc[df_scores['Method_Category'] == "SVM D"] = "SVM D", accuracy, kappa, roc
+    df_scores.to_csv("scores/nondeep.csv", index=False)
 
 
 #%% Question 1.2 Performance: Y
@@ -527,7 +528,7 @@ proba_pred = svm_Y_gridsearch_res.predict_proba(X_test)
 accuracy = accuracy_score(y_test, predictions)
 kappa = cohen_kappa_score(y_test, predictions)
 roc_auc_score(y, proba_pred, multi_class='ovr')
-print(f'SVM for Y achieved: {round(accuracy * 100, 1)}% accuracy, a kappa score of {round(kappa,2)}, roc score of {round(roc,2)}.')
+print(f'SVM for Y achieved: {round(accuracy * 100, 1)}% accuracy, a kappa score of {round(kappa,2)} & roc score of {round(roc,2)}.')
 
 if df_scores.loc[df_scores['Method_Category'] == "SVM Y"].empty:
     print("Adding.")
@@ -537,6 +538,7 @@ if df_scores.loc[df_scores['Method_Category'] == "SVM Y"].empty:
 else:
     print("Updating.")
     df_scores.loc[df_scores['Method_Category'] == "SVM Y"] = "SVM Y", accuracy, kappa, roc
+    df_scores.to_csv("scores/nondeep.csv", index=False)
 
 #%% Question 1.2 Performance-evaluation
 print("Does the performance differ between the different sets? If yes, does this surprise you (explain why or why not)?")
