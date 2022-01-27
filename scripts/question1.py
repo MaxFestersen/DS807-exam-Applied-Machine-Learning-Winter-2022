@@ -53,6 +53,7 @@ X_test = load('data/X_test_CC.npy')
 y_test = load('data/y_test_CC.npy')
 X_val = load('data/X_val_CC.npy')
 y_val = load('data/y_val_CC.npy')
+
 #%% Load numpy array from npy file - D
 X_train = load('data/X_train_D.npy')
 y_train = load('data/y_train_D.npy')
@@ -60,6 +61,7 @@ X_test = load('data/X_test_D.npy')
 y_test = load('data/y_test_D.npy')
 X_val = load('data/X_val_D.npy')
 y_val = load('data/y_val_D.npy')
+
 #%% Load numpy array from npy file - Y
 X_train = load('data/X_train_Y.npy')
 y_train = load('data/y_train_Y.npy')
