@@ -193,10 +193,13 @@ print(f'''RF with standard settings achieved {round(accuracy * 100, 1)}% accurac
 # confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+
 #%% Save model 
 joblib.dump(rf, 'data/q12rfCC_std.pkl')
+
 #%% load model 
 rf_std_CC = joblib.load('data/q12rfCC_std.pkl')
+
 #%% optimize model and save it. 
 kappa_scorer = make_scorer(cohen_kappa_score)
 metrics = [kappa_scorer, 'roc_auc']
@@ -210,37 +213,48 @@ for i in metrics:
     # Fit the model
     rf_CC.fit(np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val]))
     joblib.dump(rf_CC, f'data/q12rfCC_{i}.pkl')
+    
 #%% load model ROC_AUC
 rf_CC_ROC = joblib.load('data/q12rfCC_roc_auc.pkl')
 print(rf_CC_ROC.best_params_)
+
 # predict
 y_test_hat_rf_CC_ROC = rf_CC_ROC.predict(X_test)
+
 # accuracy and kappa score for evaluating performance
 accuracy = accuracy_score(y_test, y_test_hat_rf_CC_ROC)
 kappa = cohen_kappa_score(y_test, y_test_hat_rf_CC_ROC)
 roc_auc = roc_auc_score(y_test, y_test_hat_rf_CC_ROC)
 print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a kappa score of {round(kappa,3)} and roc_auc of {round(roc_auc,3)}.''')
+
 # confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_rf_CC_kappa, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+
 #%% load model Kappa
 rf_CC_kappa = joblib.load('data/q12rfCC_make_scorer(cohen_kappa_score).pkl')
 print(rf_CC_kappa.best_params_)
+
 # predict
 y_test_hat_rf_CC_kappa = rf_CC_kappa.predict(X_test)
+
 # accuracy and kappa score for evaluating performance
 accuracy = accuracy_score(y_test, y_test_hat_rf_CC_kappa)
 kappa = cohen_kappa_score(y_test, y_test_hat_rf_CC_kappa)
 roc_auc = roc_auc_score(y_test, y_test_hat_rf_CC_kappa)
 print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a kappa score of {round(kappa,3)} and roc_auc of {round(roc_auc,3)}.''')
+
 # confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_rf_CC_kappa, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+
 #%%
 # Initialize
 rf_CC_bal = imblearn.ensemble.BalancedRandomForestClassifier()
+
 # Fit
 rf_CC_bal.fit(X_train, y_train)
+
 # Predict
 y_test_hat_CC_bal = rf_CC_bal.predict(X_test)
 # accuracy and kappa score for evaluating performance
@@ -248,9 +262,11 @@ accuracy = accuracy_score(y_test, y_test_hat_CC_bal)
 kappa = cohen_kappa_score(y_test, y_test_hat_CC_bal)
 roc_auc = roc_auc_score(y_test, y_test_hat_CC_bal)
 print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a kappa score of {round(kappa,3)} and roc_auc of {round(roc_auc,3)}.''')
+
 # confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_CC_bal, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+
 #%% oversampling and under sampling 
 # decision tree  on imbalanced dataset with SMOTE oversampling and random undersampling
 
@@ -261,13 +277,14 @@ over = SMOTE(sampling_strategy=0.1)
 under = RandomUnderSampler(sampling_strategy=0.5)
 steps = [('over', over), ('under', under), ('model', model)]
 pipeline = Pipeline(steps=steps)
-# evaluate pipeline
 
+# evaluate pipeline
 #rf_CCc = RandomizedSearchCV(model, random_grid_RF, n_iter = 10, cv = 3, verbose=2, random_state=42, n_jobs = -1, scoring=kappa_scorer)
 
 cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=1)
 scores = cross_val_score(pipeline, X_train, y_train, scoring=[kappa_scorer, 'accuracy'], cv=cv, n_jobs=-1)
 print('Mean kappa' mean(scores))
+
 #%%
 #from sklearn.model_selection import train_test_split
 # transform the dataset
@@ -287,19 +304,24 @@ oversample = imblearn.over_sampling.SMOTE()
 X, y = oversample.fit_resample(X_train, y_train)
 counter = Counter(y)
 print(counter)
+
 #%%
 rf_CC = ensemble.RandomForestClassifier(random_state=42)
 # Random search of parameters, using 3 fold cross validation, 
 # search across 10 different combinations, use all available cores, and evaluate the performance with kappa
 rf_CC = RandomizedSearchCV(rf_CC, random_grid_RF, n_iter = 10, cv = 3, verbose=2, random_state=42, n_jobs = -1, scoring=kappa_scorer)
+
 # Fit the model
 rf_CC.fit(X_train1,y_train1)
+
 # predict
 y_test_hat_over = rf_CC.predict(X_test)
+
 # accuracy and kappa score for evaluating performance
 accuracy = accuracy_score(y_test, y_test_hat_over)
 kappa = cohen_kappa_score(y_test, y_test_hat_over)
 print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.''')
+
 # confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_over, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
