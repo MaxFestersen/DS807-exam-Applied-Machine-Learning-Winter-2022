@@ -225,8 +225,6 @@ y_test_hat = np.where(modelCC.predict(test_gen) > 0.5, 1, 0).flatten()
 df_confusion = pd.crosstab(test_gen.classes, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 
 plot_confusion_matrix(df_confusion)
-y_test_hat = np.where(modelCC.predict(test_gen) > 0.5, 1, 0)
-print(tf.math.confusion_matrix(test_gen.classes, y_test_hat))
 
 #%% Plotting model
 best_epoch = np.argmax(hist.history['val_kappa'])
