@@ -43,11 +43,12 @@ os.chdir("../")
 
 #%% Initate pandas dataframe for comparing results
 if os.path.isfile('scores/nondeep.csv'):
-    df = df = pd.read_csv('scores/nondeep.csv')
+    df_scores = pd.read_csv('scores/nondeep.csv')
 else:
-    df = pd.DataFrame(columns=['Method', 'Category', 'Accuracy', 'Kappa', 'Precision', 'Recall', 'F1-score', 'Roc'])
+    df_scores = pd.DataFrame(columns=['Method_Category', 'Accuracy', 'Kappa', 'Roc'])
     os.makedirs('scores/', exist_ok=True)
-    df.to_csv("scores/nondeep.csv", index=False)
+    df_scores.to_csv("scores/nondeep.csv", index=False)
+
 
 #%% Question 1
 print("Use non-deep learning to perform image classification according to the CC-D-Y modelling strategy. Specifically, you must:")
@@ -454,7 +455,17 @@ predictions = svm_CC_gridsearch_res.predict(X_test)
 # accuracy and kappa score for evaluating performance
 accuracy = accuracy_score(y_test, predictions)
 kappa = cohen_kappa_score(y_test, predictions)
+roc = roc_auc_score(y_test, predictions)
 print(f'SVM  for CC achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.')
+
+if df_scores.loc[df_scores['Method_Category'] == "SVM CC"].empty:
+    print("Adding.")
+    new_row = {'Method_Category': "SVM CC", 'Accuracy': accuracy, 'Kappa': kappa, 'Roc': roc}
+    df_scores = df_scores.append(new_row, ignore_index = True)
+    df_scores.to_csv("scores/nondeep.csv", index=False)
+else:
+    print("Updating.")
+    df_scores.loc[df_scores['Method_Category'] == "SVM CC"] = "SVM CC", accuracy, kappa, roc
 
 #%% Question 1.2 Performance: D
 svm_D_gridsearch_res = joblib.load("data/q12svmD.pkl")
@@ -469,6 +480,16 @@ accuracy = accuracy_score(y_test, predictions)
 kappa = cohen_kappa_score(y_test, predictions)
 print(f'SVM  for D achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.')
 
+if df_scores.loc[df_scores['Method_Category'] == "SVM D"].empty:
+    print("Adding.")
+    new_row = {'Method_Category': "SVM D", 'Accuracy': accuracy, 'Kappa': kappa, 'Roc': roc}
+    df_scores = df_scores.append(new_row, ignore_index = True)
+    df_scores.to_csv("scores/nondeep.csv", index=False)
+else:
+    print("Updating.")
+    df_scores.loc[df_scores['Method_Category'] == "SVM D"] = "SVM D", accuracy, kappa, roc
+
+
 #%% Question 1.2 Performance: Y
 svm_Y_gridsearch_res = joblib.load("data/q12svmY.pkl")
 predictions = svm_Y_gridsearch_res.predict(X_test)
@@ -481,6 +502,15 @@ predictions = svm_Y_gridsearch_res.predict(X_test)
 accuracy = accuracy_score(y_test, predictions)
 kappa = cohen_kappa_score(y_test, predictions)
 print(f'SVM  for Y achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.')
+
+if df_scores.loc[df_scores['Method_Category'] == "SVM Y"].empty:
+    print("Adding.")
+    new_row = {'Method_Category': "SVM Y", 'Accuracy': accuracy, 'Kappa': kappa, 'Roc': roc}
+    df_scores = df_scores.append(new_row, ignore_index = True)
+    df_scores.to_csv("scores/nondeep.csv", index=False)
+else:
+    print("Updating.")
+    df_scores.loc[df_scores['Method_Category'] == "SVM Y"] = "SVM Y", accuracy, kappa, roc
 
 #%% Question 1.2 Performance-evaluation
 print("Does the performance differ between the different sets? If yes, does this surprise you (explain why or why not)?")
