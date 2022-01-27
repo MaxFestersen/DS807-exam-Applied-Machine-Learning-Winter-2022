@@ -32,6 +32,14 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 os.chdir("../")
 
+#%% Initate pandas dataframe for comparing results
+if os.path.isfile('scores/nondeep.csv'):
+    df = df = pd.read_csv('scores/nondeep.csv')
+else:
+    df = pd.DataFrame(columns=['Method', 'Category', 'Accuracy', 'Kappa', 'Precision', 'Recall', 'F1-score', 'Roc'])
+    os.makedirs('scores/', exist_ok=True)
+    df.to_csv("scores/nondeep.csv", index=False)
+
 #%% Question 1
 print("Use non-deep learning to perform image classification according to the CC-D-Y modelling strategy. Specifically, you must:")
 
