@@ -8,6 +8,8 @@ Created on Mon Jan 24 11:16:52 2022
 #%% Importing libraries
 import numpy as np
 import tensorflow as tf
+import pandas as pd
+import tensorflow_addons as tfa
 from tensorboard.plugins.hparams import api as hp
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
@@ -17,6 +19,7 @@ import datetime
 from sklearn.utils import class_weight 
 import matplotlib.pyplot as plt
 import os
+import seaborn
 
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
@@ -47,11 +50,10 @@ val_gen = datagen.flow_from_directory('data/split/CC/val',
 
 test_gen = datagen.flow_from_directory('data/split/CC/test',
                                        batch_size=batch_size,
-                                       shuffle=True,
-                                       seed=1234,
                                        class_mode='binary',
                                        color_mode='grayscale',
-                                       target_size=(32, 62))
+                                       target_size=(32, 62),
+                                       shuffle=False)
 
 input_shape=(32, 62, 1)
 
@@ -156,6 +158,7 @@ def final_model(num_units_1, num_units_2, num_units_3, act_func_1, act_func_2):
     METRICS = [
         tf.keras.metrics.BinaryAccuracy(name='accuracy'),
         tf.keras.metrics.AUC(name='prc', curve='PR'), # precision-recall curve
+        tfa.metrics.CohenKappa(num_classes=2, name='kappa')
     ]
 
     modelCC.compile(
@@ -174,7 +177,7 @@ checkpoint_filepath = './checkpoints/checkpoint-modelCC'
 modelCheckpoint = ModelCheckpoint(
     filepath=checkpoint_filepath,
     save_weights_only=True,
-    monitor='val_prc',
+    monitor='val_kappa',
     mode='max',
     save_best_only=True) # Saving best checkpoint
 
@@ -209,10 +212,24 @@ hist = modelCC.fit(train_gen,
 #%% Evaluation
 modelCC.load_weights(checkpoint_filepath)
 modelCC.evaluate(test_gen) #accuracy 0.9875
-modelCC.save('models/modelCC.h5')
+
+#%%
+modelCC.save('models/modelCC')
+
+
+#%%
+def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
+    seaborn.heatmap(df_confusion, annot=True, fmt='d', cmap='Blues')
+
+y_test_hat = np.where(modelCC.predict(test_gen) > 0.5, 1, 0).flatten()
+df_confusion = pd.crosstab(test_gen.classes, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+
+plot_confusion_matrix(df_confusion)
+y_test_hat = np.where(modelCC.predict(test_gen) > 0.5, 1, 0)
+print(tf.math.confusion_matrix(test_gen.classes, y_test_hat))
 
 #%% Plotting model
-best_epoch = np.argmax(hist.history['val_prc'])
+best_epoch = np.argmax(hist.history['val_kappa'])
 
 plt.plot(hist.history['accuracy'])
 plt.plot(hist.history['val_accuracy'])
@@ -242,4 +259,14 @@ plt.ylabel('loss')
 plt.xlabel('epoch')
 plt.legend(['train', 'test'], loc='upper left')
 plt.savefig('plots/modelCC_loss.png', dpi=300)
+plt.show()
+
+plt.plot(hist.history['kappa'])
+plt.plot(hist.history['val_kappa'])
+plt.axvline(x=best_epoch)
+plt.title('model kappa')
+plt.ylabel('kappa')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('plots/modelCC_kappa.png', dpi=300)
 plt.show()
