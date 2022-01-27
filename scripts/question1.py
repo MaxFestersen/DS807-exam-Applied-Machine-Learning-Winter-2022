@@ -202,22 +202,8 @@ results = pd.DataFrame(svm_D.cv_results_)
 print(results[results['mean_test_score'] == results['mean_test_score'].min()])
 
 #%% Question 1.2 Problem solving: D SVM gridsearch - Save results
-joblib.dump(svm_D, 'data/q12svmD_bacc.pkl')
+joblib.dump(svm_D, 'data/q12svmD.pkl')
 
-#%% Question 1.2 Problem solving: D SVM gridsearch - Scoring: accuracy
-parameters = {'kernel':('rbf', 'linear', 'poly'), 'C':[1, 10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr', 'ovo']}
-svc = svm.SVC()
-svm_D = GridSearchCV(svc, 
-                   parameters,
-                   n_jobs=-1, # number of simultaneous jobs (-1 all cores)
-                   scoring='accuracy')
-svm_D.fit(np.concatenate((X_train, X_val), axis=0), np.concatenate((y_train, y_val), axis=0))
-
-results = pd.DataFrame(svm_D.cv_results_)
-print(results[results['mean_test_score'] == results['mean_test_score'].min()])
-
-#%% Question 1.2 Problem solving: D SVM gridsearch - Save results
-joblib.dump(svm_D, 'data/q12svmD_acc.pkl')
 
 #%% Question 1.2 Problem solving: D RF
 #todo
