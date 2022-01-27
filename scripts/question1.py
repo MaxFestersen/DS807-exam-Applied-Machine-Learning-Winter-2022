@@ -18,7 +18,7 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
 from numpy import load
 import joblib
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, cohen_kappa_score, make_scorer
 from sklearn import ensemble # ensemble instead of tree
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from sklearn.metrics import classification_report
@@ -45,7 +45,7 @@ print("Discussion is done in report.")
 #%% Question 1.2
 print("Use one of the methods above to solve the problem. A combination of two or all three of the methods may also be used, if you believe this is better (regardless of whether you use one or multiple methods, this must be motivated).")
 
-#%% Load numpy array from npy file
+#%% Load numpy array from npy file - Anders
 #%% Load numpy array from npy file - CC
 X_train = load('data/X_train_CC.npy')
 y_train = load('data/y_train_CC.npy')
@@ -106,8 +106,43 @@ y_val_hat_poly_best = svm_poly_best.predict(X_test)
 accuracy_poly_best = accuracy_score(y_val_hat_poly_best, y_test)
 print(f'Optimized polynomial SVM achieved {round(accuracy_poly_best * 100, 1)}% accuracy on C.')
 
-#%% Question 1.2 Problem solving: CC RF
-#%%
+#%% Making tuning-grid for RF and GB - Anders
+
+# Number of trees in random forest
+n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
+# Number of features to consider at every split
+max_features = ['auto', 'log2'] # auto = sqrt(n_features), log2 = log2(n_features)
+# Maximum number of levels in tree
+max_depth = [int(x) for x in np.linspace(10, 110, num = 11)]
+max_depth.append(None)
+# Minimum number of samples required to split a node
+min_samples_split = [2, 5, 10]
+# Minimum number of samples required at each leaf node
+min_samples_leaf = [1, 2, 4]
+# Method of selecting samples for training each tree
+bootstrap = [True]
+# 
+class_weight=['balanced_subsample','balanced', None]
+#
+learning_rate = [0.15,0.1,0.05,0.01,0.005,0.001]
+
+# Create grids
+random_grid_RF = {'n_estimators': n_estimators,
+                  'max_features': max_features,
+                  'max_depth': max_depth,
+                  'min_samples_split': min_samples_split,
+                  'min_samples_leaf': min_samples_leaf,
+                  'bootstrap': bootstrap,
+                  'class_weight': class_weight}
+
+random_grid_GB = {'max_depth': max_depth,
+                  'min_samples_leaf': min_samples_leaf,
+                  'learning_rate': learning_rate}
+
+pprint(random_grid_RF)
+pprint(random_grid_GB)
+#%% Question 1.2 Problem solving: CC RF - Anders
+#%% Standard model without tuning
 # Initialize
 rf = ensemble.RandomForestClassifier(random_state=(42))
 
@@ -116,34 +151,120 @@ rf.fit(X_train, y_train)
 
 # Predict
 y_test_hat_std = rf.predict(X_test)
+
+# accuracy and kappa score for evaluating performance
 accuracy = accuracy_score(y_test, y_test_hat_std)
-print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
+kappa = cohen_kappa_score(y_test, y_test_hat_std)
+print(f'''RF with standard settings achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.''')
+# confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+#%% Save model 
+joblib.dump(rf, 'data/q12rfCC_std.pkl')
+#%% load model 
+rf_CCc = joblib.load('data/q12rfCC_std.pkl')
 #%%
+kappa_scorer = make_scorer(cohen_kappa_score)
+# Use the random grid to search for best hyperparameters
+# First create the base model to tune
+rf_CC = ensemble.RandomForestClassifier(random_state=42)
+# Random search of parameters, using 3 fold cross validation, 
+# search across 10 different combinations, use all available cores, and evaluate the performance with kappa
+rf_CC = RandomizedSearchCV(rf_CC, random_grid_RF, n_iter = 10, cv = 3, verbose=2, random_state=42, n_jobs = -1, scoring='roc_auc')
+# Fit the model
+rf_CC.fit(np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val]))
+# optimal parameter settings 
+print(rf_CC.best_params_)
+# predict
+y_test_hat_rf_CC = rf_CC.predict(X_test)
+# accuracy and kappa score for evaluating performance
+accuracy = accuracy_score(y_test, y_test_hat_rf_CC)
+kappa = cohen_kappa_score(y_test, y_test_hat_rf_CC)
+print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.''')
+# confusion matrix
+df_confusion = pd.crosstab(y_test, y_test_hat_rf_CC, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+plot_confusion_matrix(df_confusion)
+#%% Save model 
+joblib.dump(rf_CC, 'data/q12rfCC.pkl')
+#%% load model 
+rf_CC = joblib.load('data/q12rfCC.pkl')
 
+#%%
+from collections import Counter
+import imblearn
+from imblearn.ensemble import BalancedRandomForestClassifier
 # Initialize
-rf = ensemble.RandomForestClassifier(class_weight='balanced', random_state=(42))
+rf = imblearn.ensemble.BalancedRandomForestClassifier()
 
 # Fit
 rf.fit(X_train, y_train)
 
 # Predict
-y_test_hat_bal = rf.predict(X_test)
-accuracy = accuracy_score(y_test, y_test_hat_bal)
-print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
+y_test_hat = rf.predict(X_test)
+# accuracy and kappa score for evaluating performance
+accuracy = accuracy_score(y_test, y_test_hat)
+kappa = cohen_kappa_score(y_test, y_test_hat)
+print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.''')
+# confusion matrix
+df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+plot_confusion_matrix(df_confusion)
+#%% oversampling and under sampling 
+# decision tree  on imbalanced dataset with SMOTE oversampling and random undersampling
+from numpy import mean
+from imblearn.pipeline import Pipeline
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
+from sklearn.model_selection import cross_val_score, RepeatedStratifiedKFold
 
 #%%
-# Initialize
-rf = ensemble.RandomForestClassifier(class_weight='balanced_subsample', random_state=(42))
+# define pipeline
+model = ensemble.RandomForestClassifier(random_state=42)
+over = SMOTE(sampling_strategy=0.1)
+under = RandomUnderSampler(sampling_strategy=0.5)
+steps = [('over', over), ('under', under), ('model', model)]
+pipeline = Pipeline(steps=steps)
+# evaluate pipeline
 
-# Fit
-rf.fit(X_train, y_train)
+#rf_CCc = RandomizedSearchCV(model, random_grid_RF, n_iter = 10, cv = 3, verbose=2, random_state=42, n_jobs = -1, scoring=kappa_scorer)
 
-# Predict
-y_test_hat_sub = rf.predict(X_test)
-accuracy = accuracy_score(y_test, y_test_hat_sub)
-print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
+cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=1)
+scores = cross_val_score(pipeline, X_train, y_train, scoring=[kappa_scorer, 'accuracy'], cv=cv, n_jobs=-1)
+print('Mean kappa' mean(scores))
+#%%
+#from sklearn.model_selection import train_test_split
+# transform the dataset
+X, y = np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val])
+
+over = SMOTE(sampling_strategy=0.2)
+under = RandomUnderSampler(sampling_strategy=0.4)
+
+steps = [('o', over), ('u', under)]
+pipeline = Pipeline(steps=steps)
+
+X_train1, y_train1 = pipeline.fit_resample(X, y)
+#X_train1, X_test1, y_train1, y_test1 = train_test_split(X, y, test_size=0.2, random_state=42)
+
+#%%
+oversample = imblearn.over_sampling.SMOTE()
+X, y = oversample.fit_resample(X_train, y_train)
+counter = Counter(y)
+print(counter)
+#%%
+rf_CC = ensemble.RandomForestClassifier(random_state=42)
+# Random search of parameters, using 3 fold cross validation, 
+# search across 10 different combinations, use all available cores, and evaluate the performance with kappa
+rf_CC = RandomizedSearchCV(rf_CC, random_grid_RF, n_iter = 10, cv = 3, verbose=2, random_state=42, n_jobs = -1, scoring=kappa_scorer)
+# Fit the model
+rf_CC.fit(X_train1,y_train1)
+# predict
+y_test_hat_over = rf_CC.predict(X_test)
+# accuracy and kappa score for evaluating performance
+accuracy = accuracy_score(y_test, y_test_hat_over)
+kappa = cohen_kappa_score(y_test, y_test_hat_over)
+print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.''')
+# confusion matrix
+df_confusion = pd.crosstab(y_test, y_test_hat_over, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+plot_confusion_matrix(df_confusion)
 #%%
 import imbalanced_learn as imblearn
 from imblearn.ensemble import BalancedRandomForestClassifier
@@ -158,10 +279,10 @@ y_test_hat = rf.predict(X_test)
 accuracy = accuracy_score(y_test, y_test_hat)
 print(f'''RF with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 
-#%%, cmap='spring'
-#df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+#%%
+
 def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
-    seaborn.heatmap(df_confusion, annot=True, fmt='d')
+    seaborn.heatmap(df_confusion, annot=True, fmt='d', cmap='Blues')
     #plt.matshow(df_confusion, cmap=cmap) 
     #plt.colorbar()
     #tick_marks = np.arange(len(df_confusion.columns))
@@ -174,23 +295,26 @@ def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
     #        plt.text(j,i, str(df_confusion[i][j]))
 
 #plot_confusion_matrix(df_confusion)
-#%% Question 1.2 Problem solving: CC B
+#%% Question 1.2 Problem solving: CC B - Anders
 #todo
-gbt = ensemble.HistGradientBoostingClassifier()
+
+gbt = ensemble.HistGradientBoostingClassifier(random_state=42)
 
 # Fit
 gbt.fit(X_train, y_train)
 
 # Predict
+
 y_test_hat = gbt.predict(X_test)
 accuracy = accuracy_score(y_test, y_test_hat)
-print(f'''Gradient boosted DTs with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
+kappa = cohen_kappa_score(y_test, y_test_hat)
+print(f'''Gradient boosted DTs with default settings achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,1)}.''')
 df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
 #%% Question 1.2 Problem solving: D
 #%% Question 1.2 Problem solving: D SVM
 #%% Question 1.2 Problem solving: D SVM gridsearch - Scoring: balanced_accuracy
-parameters = {'kernel':('rbf', 'linear', 'poly'), 'C':[1, 10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr', 'ovo']}
+parameters = {'kernel':['rbf'], 'C':[10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr']}
 svc = svm.SVC()
 svm_D = GridSearchCV(svc, 
                    parameters,
@@ -221,46 +345,23 @@ print(confusion_matrix(y_test, y_test_hat_std))
 df_confusion = pd.crosstab(y_test, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 df_confusion = df_confusion.reindex(columns=[0,1,2,3,4,10], fill_value=0)
 plot_confusion_matrix(df_confusion)
-#%%
 
-# Number of trees in random forest
-n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
-# Number of features to consider at every split
-max_features = ['auto', 'log2'] # auto = sqrt(n_features), log2 = log2(n_features)
-# Maximum number of levels in tree
-max_depth = [int(x) for x in np.linspace(10, 110, num = 11)]
-max_depth.append(None)
-# Minimum number of samples required to split a node
-min_samples_split = [2, 5, 10]
-# Minimum number of samples required at each leaf node
-min_samples_leaf = [1, 2, 4]
-# Method of selecting samples for training each tree
-bootstrap = [True]
-#
-class_weight=['balanced_subsample','balanced', None]
-# Create the random grid
-random_grid = {'n_estimators': n_estimators,
-               'max_features': max_features,
-               'max_depth': max_depth,
-               'min_samples_split': min_samples_split,
-               'min_samples_leaf': min_samples_leaf,
-               'bootstrap': bootstrap,
-               'class_weight': class_weight}
-pprint(random_grid)
 #%%
 # Use the random grid to search for best hyperparameters
 # First create the base model to tune
-rf = ensemble.RandomForestClassifier()
+rf = ensemble.RandomForestClassifier(random_state=42)
 # Random search of parameters, using 3 fold cross validation, 
 # search across 100 different combinations, and use all available cores
-rf_random = RandomizedSearchCV(rf, random_grid, n_iter = 10, cv = 3, verbose=2, random_state=42, n_jobs = -1)
+rf_random = RandomizedSearchCV(rf, random_grid_RF, n_iter = 10, cv = 3, verbose=2, random_state=42, n_jobs = -1, scoring=kappa_scorer)
 # Fit the random search model
 rf_random.fit(X_train, y_train)
 
 rf_random.best_params_
+
 y_test_hat_std = rf_random.predict(X_test)
 accuracy = accuracy_score(y_test, y_test_hat_std)
-print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy.''')
+kappa = cohen_kappa_score(y_test, y_test_hat_std)
+print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,1)}.''')
 df_confusion = pd.crosstab(y_test, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 df_confusion = df_confusion.reindex(columns=[0,1,2,3,4,10], fill_value=0)
 plot_confusion_matrix(df_confusion)
@@ -268,10 +369,10 @@ plot_confusion_matrix(df_confusion)
 best_random = rf_random.best_estimator_
 random_accuracy = evaluate(best_random, test_features, test_labels)
 #%% Question 1.2 Problem solving: D B
-gbt_D = ensemble.HistGradientBoostingClassifier(random_state=(42))
+gbt_D = ensemble.HistGradientBoostingClassifier(random_state=(42), loss='categorical_crossentropy')
 
 # Fit
-gbt.fit(X_train, y_train)
+gbt_D.fit(X_train, y_train)
 
 # Predict
 y_test_hat_D = gbt_D.predict(X_test)
@@ -279,7 +380,19 @@ accuracy = accuracy_score(y_test, y_test_hat)
 print(f'''Gradient boosted DTs with default settings achieved {round(accuracy * 100, 1)}% accuracy.''')
 df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+#%%
+gb_D = ensemble.HistGradientBoostingClassifier(random_state=42,loss='categorical_crossentropy')
+# Random search of parameters, using 3 fold cross validation, 
+# search across 100 different combinations, and use all available cores
+gb_random_D = RandomizedSearchCV(gb_D, random_grid_GB, n_iter = 10, cv = 3, random_state=42, n_jobs = -1)
+# Fit the random search model
+gb_random_D.fit(X_train, y_train)
+
+gb_random.best_params_
+y_test_hat_D_gb = gb_random.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_D_gb)
 #%% Question 1.2 Problem solving: Y
+metrics.cohen_kappa_score
 #%% Question 1.2 Problem solving: Y SVM
 #%% Question 1.2 Problem solving: Y SVM gridsearch
 parameters = {'kernel':('rbf', 'linear', 'poly'), 'C':[1, 10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr', 'ovo']}
