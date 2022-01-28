@@ -876,8 +876,6 @@ plot_confusion_matrix(df_confusion)
 #%% Question 1.2 Performance
 print("Calculate and report the method’s performance on the training, validation, and test data.")
 
-# Accuracy metric is bad for evaluating performance.
-
 #%% Question 1.2 Performance: CC
 
 #%% Question 1.2 Performance: D
