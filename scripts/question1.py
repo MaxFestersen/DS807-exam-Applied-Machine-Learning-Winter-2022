@@ -746,6 +746,10 @@ else:
     df_scores.loc[df_scores['Method_Category'] == "SVM Y"] = "SVM Y", accuracy, kappa, roc
     df_scores.to_csv("scores/nondeep.csv", index=False)
 
+#%% Question 1.2 Problem solving: Y SVM Best model
+svm_best = svm.SVC(kernel='rbf', C = 10, gamma = 'auto', decision_function_shape = "ovr", probability = True)
+svm_best.fit(X_train, y_train)
+
 #%% Question 1.2 Problem solving: Y SVM Best model performance
 # Predictions
 X_test_pred = svm_best.predict(X_test)
