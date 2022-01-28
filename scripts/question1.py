@@ -41,6 +41,15 @@ dname = os.path.dirname(abspath)
 os.chdir(dname)
 os.chdir("../")
 
+#%% Initate pandas dataframe for comparing results
+if os.path.isfile('scores/nondeep.csv'):
+    df_scores = pd.read_csv('scores/nondeep.csv')
+else:
+    df_scores = pd.DataFrame(columns=['Method_Category', 'Accuracy', 'Kappa', 'Roc'])
+    os.makedirs('scores/', exist_ok=True)
+    df_scores.to_csv("scores/nondeep.csv", index=False)
+
+
 #%% Question 1
 print("Use non-deep learning to perform image classification according to the CC-D-Y modelling strategy. Specifically, you must:")
 
@@ -192,6 +201,7 @@ print(f'''RF with standard settings achieved {round(accuracy * 100, 1)}% accurac
 # confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_std, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+
 #%% Save model 
 joblib.dump(rf_std_CC, 'data/q12rfCC_std.pkl')
 #%% load model 
@@ -208,32 +218,41 @@ for i in metrics:
     # Fit the model
     rf_CC.fit(np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val]))
     joblib.dump(rf_CC, f'data/q12rfCC_{i}.pkl')
+    
 #%% load model ROC_AUC
 rf_CC_ROC = joblib.load('data/q12rfCC_roc_auc.pkl')
 print(rf_CC_ROC.best_params_)
+
 # predict
 y_test_hat_rf_CC_ROC = rf_CC_ROC.predict(X_test)
+
 # accuracy and kappa score for evaluating performance
 accuracy = accuracy_score(y_test, y_test_hat_rf_CC_ROC)
 kappa = cohen_kappa_score(y_test, y_test_hat_rf_CC_ROC)
 roc_auc = roc_auc_score(y_test, y_test_hat_rf_CC_ROC)
 print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a kappa score of {round(kappa,3)} and roc_auc of {round(roc_auc,3)}.''')
+
 # confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_rf_CC_ROC, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+
 #%% load model Kappa
 rf_CC_kappa = joblib.load('data/q12rfCC_make_scorer(cohen_kappa_score).pkl')
 print(rf_CC_kappa.best_params_)
+
 # predict
 y_test_hat_rf_CC_kappa = rf_CC_kappa.predict(X_test)
+
 # accuracy and kappa score for evaluating performance
 accuracy = accuracy_score(y_test, y_test_hat_rf_CC_kappa)
 kappa = cohen_kappa_score(y_test, y_test_hat_rf_CC_kappa)
 roc_auc = roc_auc_score(y_test, y_test_hat_rf_CC_kappa)
 print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a kappa score of {round(kappa,3)} and roc_auc of {round(roc_auc,3)}.''')
+
 # confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_rf_CC_kappa, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+
 #%%
 # Initialize
 for i in metrics: 
@@ -252,9 +271,11 @@ accuracy = accuracy_score(y_test, y_test_hat_CC_bal_kappa)
 kappa = cohen_kappa_score(y_test, y_test_hat_CC_bal_kappa)
 roc_auc = roc_auc_score(y_test, y_test_hat_CC_bal_kappa)
 print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a kappa score of {round(kappa,3)} and roc_auc of {round(roc_auc,3)}.''')
+
 # confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_CC_bal_kappa, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+
 #%%
 # Predict
 rf_CC_bal_ROC = joblib.load('data/q12rfCC_bal_roc_auc.pkl')
@@ -271,6 +292,28 @@ plot_confusion_matrix(df_confusion)
 
 #%% oversampling and under sampling 
 # on imbalanced dataset with SMOTE oversampling and random undersampling
+
+
+#%% oversampling and under sampling 
+# decision tree  on imbalanced dataset with SMOTE oversampling and random undersampling
+
+#%%
+# define pipeline
+model = ensemble.RandomForestClassifier(random_state=42)
+over = SMOTE(sampling_strategy=0.1)
+under = RandomUnderSampler(sampling_strategy=0.5)
+steps = [('over', over), ('under', under), ('model', model)]
+pipeline = Pipeline(steps=steps)
+
+# evaluate pipeline
+#rf_CCc = RandomizedSearchCV(model, random_grid_RF, n_iter = 10, cv = 3, verbose=2, random_state=42, n_jobs = -1, scoring=kappa_scorer)
+
+cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=1)
+scores = cross_val_score(pipeline, X_train, y_train, scoring=[kappa_scorer, 'accuracy'], cv=cv, n_jobs=-1)
+print('Mean kappa' mean(scores))
+
+#%%
+#from sklearn.model_selection import train_test_split
 # transform the dataset
 X, y = np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val])
 over = SMOTE(sampling_strategy=0.2)
@@ -297,6 +340,30 @@ accuracy = accuracy_score(y_test, y_test_hat_over_under_kappa)
 kappa = cohen_kappa_score(y_test, y_test_hat_over_under_kappa)
 roc_auc = roc_auc_score(y_test, y_test_hat_over_under_kappa)
 print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a kappa score of {round(kappa,3)} and roc_auc of {round(roc_auc,3)}.''')
+
+oversample = imblearn.over_sampling.SMOTE()
+X, y = oversample.fit_resample(X_train, y_train)
+counter = Counter(y)
+print(counter)
+
+#%%
+rf_CC = ensemble.RandomForestClassifier(random_state=42)
+# Random search of parameters, using 3 fold cross validation, 
+# search across 10 different combinations, use all available cores, and evaluate the performance with kappa
+rf_CC = RandomizedSearchCV(rf_CC, random_grid_RF, n_iter = 10, cv = 3, verbose=2, random_state=42, n_jobs = -1, scoring=kappa_scorer)
+
+# Fit the model
+rf_CC.fit(X_train1,y_train1)
+
+# predict
+y_test_hat_over = rf_CC.predict(X_test)
+
+# accuracy and kappa score for evaluating performance
+accuracy = accuracy_score(y_test, y_test_hat_over)
+kappa = cohen_kappa_score(y_test, y_test_hat_over)
+print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,2)}.''')
+
+>>>>>>> 469f8b6b315002cd22344903b8bc594621f244ec
 # confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_over_under_kappa, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
@@ -394,15 +461,16 @@ roc_auc = roc_auc_score(y_test, y_test_hat)
 print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a kappa score of {round(kappa,3)} and roc_auc of {round(roc_auc,3)}.''')
 df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+
 #%% Question 1.2 Problem solving: D
 #%% Question 1.2 Problem solving: D SVM
 #%% Question 1.2 Problem solving: D SVM gridsearch - Scoring: balanced_accuracy
 parameters = {'kernel':['rbf'], 'C':[10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr']}
-svc = svm.SVC()
-svm_D = GridSearchCV(svc, 
-                   parameters,
-                   n_jobs=-1, # number of simultaneous jobs (-1 all cores)
-                   scoring='balanced_accuracy')
+svc = svm.SVC(probability=True)
+svm_D = GridSearchCV(svc,
+                     parameters,
+                     n_jobs=-1, # number of simultaneous jobs (-1 all cores)
+                     scoring='balanced_accuracy')
 svm_D.fit(np.concatenate((X_train, X_val), axis=0), np.concatenate((y_train, y_val), axis=0))
 
 results = pd.DataFrame(svm_D.cv_results_)
@@ -487,7 +555,7 @@ metrics.cohen_kappa_score
 #%% Question 1.2 Problem solving: Y SVM
 #%% Question 1.2 Problem solving: Y SVM gridsearch
 parameters = {'kernel':('rbf', 'linear', 'poly'), 'C':[1, 10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr', 'ovo']}
-svc = svm.SVC()
+svc = svm.SVC(probability=True)
 svm_Y = GridSearchCV(svc, 
                    parameters,
                    n_jobs=-1, # number of simultaneous jobs (-1 all cores)
@@ -553,23 +621,22 @@ print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a
 df_confusion = pd.crosstab(y_test, y_test_hat_Y, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
 #%%
-gb_D = ensemble.HistGradientBoostingClassifier(random_state=42,loss='categorical_crossentropy')
+gb_Y = ensemble.HistGradientBoostingClassifier(random_state=42,loss='categorical_crossentropy')
 # Random search of parameters, using 3 fold cross validation, 
 # search across 100 different combinations, and use all available cores
-gb_D = RandomizedSearchCV(gb_D, random_grid_GB, n_iter = 10, cv = 3, random_state=42, n_jobs = -1)
+gb_Y = RandomizedSearchCV(gb_Y, random_grid_GB, n_iter = 10, cv = 3, random_state=42, n_jobs = -1)
 # Fit the random search model
-gb_D.fit(X_train, y_train)
-joblib.dump(gb_D, 'data/q12gb_D.pkl')
+gb_Y.fit(X_train, y_train)
+joblib.dump(gb_Y, 'data/q12gb_Y.pkl')
 #%%
-gb_D_tuned = joblib.load('data/q12gb_D.pkl')
-gb_D_tuned.best_params_
-y_test_hat_D_Tuned = gb_D_tuned.predict(X_test)
-accuracy = accuracy_score(y_test, y_test_hat_D_Tuned)
-kappa = cohen_kappa_score(y_test, y_test_hat_D_Tuned)
+gb_Y_tuned = joblib.load('data/q12gb_Y.pkl')
+gb_Y_tuned.best_params_
+y_test_hat_Y_Tuned = gb_Y_tuned.predict(X_test)
+accuracy = accuracy_score(y_test, y_test_hat_Y_Tuned)
+kappa = cohen_kappa_score(y_test, y_test_hat_Y_Tuned)
 print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,1)}.''')
-df_confusion = pd.crosstab(y_test, y_test_hat_D_Tuned, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+df_confusion = pd.crosstab(y_test, y_test_hat_Y_Tuned, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
-
 #%% Question 1.2 Performance
 print("Calculate and report the method’s performance on the training, validation, and test data.")
 
@@ -577,18 +644,78 @@ print("Calculate and report the method’s performance on the training, validati
 
 #%% Question 1.2 Performance: CC
 #print(sorted(clf.cv_results_()))
-svm_gridsearch_res = joblib.load("data/q12svmCC.pkl")
-clf_predictions = svm_gridsearch_res.predict(X_test)
+svm_CC_gridsearch_res = joblib.load("data/q12svmCC.pkl")
+predictions = svm_CC_gridsearch_res.predict(X_test)
 
-print(svm_gridsearch_res.best_estimator_)
-print(svm_gridsearch_res.best_params_)
-print(classification_report(y_test, clf_predictions))
+#print(svm_CC_gridsearch_res.best_estimator_)
+#print(svm_CC_gridsearch_res.best_params_)
+#print(classification_report(y_test, predictions))
+
+# accuracy and kappa score for evaluating performance
+accuracy = accuracy_score(y_test, predictions)
+kappa = cohen_kappa_score(y_test, predictions)
+roc = roc_auc_score(y_test, predictions)
+print(f'SVM for CC achieved: {round(accuracy * 100, 1)}% accuracy, a kappa score of {round(kappa,2)} & roc score of {round(roc,2)}.')
+
+if df_scores.loc[df_scores['Method_Category'] == "SVM CC"].empty:
+    print("Adding.")
+    new_row = {'Method_Category': "SVM CC", 'Accuracy': accuracy, 'Kappa': kappa, 'Roc': roc}
+    df_scores = df_scores.append(new_row, ignore_index = True)
+    df_scores.to_csv("scores/nondeep.csv", index=False)
+else:
+    print("Updating.")
+    df_scores.loc[df_scores['Method_Category'] == "SVM CC"] = "SVM CC", accuracy, kappa, roc
+    df_scores.to_csv("scores/nondeep.csv", index=False)
 
 #%% Question 1.2 Performance: D
-#todo
+svm_D_gridsearch_res = joblib.load("data/q12svmD.pkl")
+predictions = svm_D_gridsearch_res.predict(X_test)
+proba_pred = svm_D_gridsearch_res.predict_proba(X_test)
+#print(svm_D_gridsearch_res.best_estimator_)
+#print(svm_D_gridsearch_res.best_params_)
+#print(classification_report(y_test, predictions))
+
+# accuracy and kappa score for evaluating performance
+accuracy = accuracy_score(y_test, predictions)
+kappa = cohen_kappa_score(y_test, predictions)
+roc = roc_auc_score(y_test, proba_pred, multi_class="ovr")
+print(f'SVM for D achieved: {round(accuracy * 100, 1)}% accuracy, a kappa score of {round(kappa,2)} & roc score of {round(roc,2)}.')
+
+if df_scores.loc[df_scores['Method_Category'] == "SVM D"].empty:
+    print("Adding.")
+    new_row = {'Method_Category': "SVM D", 'Accuracy': accuracy, 'Kappa': kappa, 'Roc': roc}
+    df_scores = df_scores.append(new_row, ignore_index = True)
+    df_scores.to_csv("scores/nondeep.csv", index=False)
+else:
+    print("Updating.")
+    df_scores.loc[df_scores['Method_Category'] == "SVM D"] = "SVM D", accuracy, kappa, roc
+    df_scores.to_csv("scores/nondeep.csv", index=False)
+
 
 #%% Question 1.2 Performance: Y
-#todo
+svm_Y_gridsearch_res = joblib.load("data/q12svmY.pkl")
+predictions = svm_Y_gridsearch_res.predict(X_test)
+proba_pred = svm_Y_gridsearch_res.predict_proba(X_test)
+
+#print(svm_Y_gridsearch_res.best_estimator_)
+#print(svm_Y_gridsearch_res.best_params_)
+#print(classification_report(y_test, predictions))
+
+# accuracy and kappa score for evaluating performance
+accuracy = accuracy_score(y_test, predictions)
+kappa = cohen_kappa_score(y_test, predictions)
+roc_auc_score(y, proba_pred, multi_class='ovr')
+print(f'SVM for Y achieved: {round(accuracy * 100, 1)}% accuracy, a kappa score of {round(kappa,2)} & roc score of {round(roc,2)}.')
+
+if df_scores.loc[df_scores['Method_Category'] == "SVM Y"].empty:
+    print("Adding.")
+    new_row = {'Method_Category': "SVM Y", 'Accuracy': accuracy, 'Kappa': kappa, 'Roc': roc}
+    df_scores = df_scores.append(new_row, ignore_index = True)
+    df_scores.to_csv("scores/nondeep.csv", index=False)
+else:
+    print("Updating.")
+    df_scores.loc[df_scores['Method_Category'] == "SVM Y"] = "SVM Y", accuracy, kappa, roc
+    df_scores.to_csv("scores/nondeep.csv", index=False)
 
 #%% Question 1.2 Performance-evaluation
 print("Does the performance differ between the different sets? If yes, does this surprise you (explain why or why not)?")
