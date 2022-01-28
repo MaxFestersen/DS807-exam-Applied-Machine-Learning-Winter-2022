@@ -603,7 +603,7 @@ else:
 # Obtain and check accuracy on validation data
 X_val_acc = accuracy_score(X_val_pred, y_val)
 X_val_kappa = cohen_kappa_score(y_val, X_val_pred)
-X_val_roc = roc_auc_score(y_test, X_val_pred_proba, multi_class='ovr')
+X_val_roc = roc_auc_score(y_val, X_val_pred_proba, multi_class='ovr')
 print(f'SVM for D achieved on validation-set: {round(X_val_acc * 100, 1)}% accuracy, a kappa score of {round(X_val_kappa,2)} & roc score of {round(X_val_roc,2)}.')
 if df_scores.loc[df_scores['Method_Category'] == "SVM D val"].empty:
     print("Adding SVM D validation-set.")
@@ -618,7 +618,7 @@ else:
 # Obtain and check accuracy on training data
 X_train_acc = accuracy_score(X_train_pred, y_train)
 X_train_kappa = cohen_kappa_score(y_train, X_train_pred)
-X_train_roc = roc_auc_score(y_test, X_train_pred_proba, multi_class='ovr')
+X_train_roc = roc_auc_score(y_train, X_train_pred_proba, multi_class='ovr')
 print(f'SVM for D achieved on validation-set: {round(X_train_acc * 100, 1)}% accuracy, a kappa score of {round(X_train_kappa,2)} & roc score of {round(X_train_roc,2)}.')
 if df_scores.loc[df_scores['Method_Category'] == "SVM D train"].empty:
     print("Adding SVM Y training-set.")
@@ -773,7 +773,7 @@ else:
 # Obtain and check accuracy on validation data
 X_val_acc = accuracy_score(X_val_pred, y_val)
 X_val_kappa = cohen_kappa_score(y_val, X_val_pred)
-X_val_roc = roc_auc_score(y_test, X_val_pred_proba, multi_class='ovr')
+X_val_roc = roc_auc_score(y_val, X_val_pred_proba, multi_class='ovr')
 print(f'SVM for Y achieved on validation-set: {round(X_val_acc * 100, 1)}% accuracy, a kappa score of {round(X_val_kappa,2)} & roc score of {round(X_val_roc,2)}.')
 if df_scores.loc[df_scores['Method_Category'] == "SVM Y val"].empty:
     print("Adding SVM Y validation-set.")
@@ -788,7 +788,7 @@ else:
 # Obtain and check accuracy on training data
 X_train_acc = accuracy_score(X_train_pred, y_train)
 X_train_kappa = cohen_kappa_score(y_train, X_train_pred)
-X_train_roc = roc_auc_score(y_test, X_train_pred_proba, multi_class='ovr')
+X_train_roc = roc_auc_score(y_train, X_train_pred_proba, multi_class='ovr')
 print(f'SVM for Y achieved on validation-set: {round(X_train_acc * 100, 1)}% accuracy, a kappa score of {round(X_train_kappa,2)} & roc score of {round(X_train_roc,2)}.')
 if df_scores.loc[df_scores['Method_Category'] == "SVM Y train"].empty:
     print("Adding SVM Y training-set.")
