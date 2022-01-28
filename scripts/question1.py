@@ -439,7 +439,7 @@ accuracy = accuracy_score(y_test, y_test_hat_D_gb)
 metrics.cohen_kappa_score
 #%% Question 1.2 Problem solving: Y SVM
 #%% Question 1.2 Problem solving: Y SVM gridsearch
-parameters = {'kernel':('rbf', 'linear', 'poly'), 'C':[1, 10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr', 'ovo']}
+parameters = {'kernel':['rbf'], 'C':[1, 10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr']}
 svc = svm.SVC(probability=True)
 svm_Y = GridSearchCV(svc, 
                    parameters,
@@ -526,7 +526,7 @@ proba_pred = svm_Y_gridsearch_res.predict_proba(X_test)
 # accuracy and kappa score for evaluating performance
 accuracy = accuracy_score(y_test, predictions)
 kappa = cohen_kappa_score(y_test, predictions)
-roc_auc_score(y, proba_pred, multi_class='ovr')
+roc= roc_auc_score(y_test, proba_pred, multi_class='ovr')
 print(f'SVM for Y achieved: {round(accuracy * 100, 1)}% accuracy, a kappa score of {round(kappa,2)}, roc score of {round(roc,2)}.')
 
 if df_scores.loc[df_scores['Method_Category'] == "SVM Y"].empty:
