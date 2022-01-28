@@ -650,6 +650,7 @@ predictions = svm_CC_gridsearch_res.predict(X_test)
 #print(svm_CC_gridsearch_res.best_estimator_)
 #print(svm_CC_gridsearch_res.best_params_)
 #print(classification_report(y_test, predictions))
+#print(svm_CC_gridsearch_res.cv_results_ )
 
 # accuracy and kappa score for evaluating performance
 accuracy = accuracy_score(y_test, predictions)
