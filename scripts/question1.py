@@ -142,14 +142,14 @@ X_train_pred = svm_poly_best.predict(X_train)
 X_test_acc = accuracy_score(X_test_pred, y_test)
 X_test_kappa = cohen_kappa_score(y_test, X_test_pred)
 X_test_roc = roc_auc_score(y_test, X_test_pred)
-print(f'SVM for Y achieved on test-set: {round(X_test_acc * 100, 1)}% accuracy, a kappa score of {round(X_test_kappa,2)} & roc score of {round(X_test_roc,2)}.')
+print(f'SVM for CC achieved on test-set: {round(X_test_acc * 100, 1)}% accuracy, a kappa score of {round(X_test_kappa,2)} & roc score of {round(X_test_roc,2)}.')
 if df_scores.loc[df_scores['Method_Category'] == "SVM CC test"].empty:
     print("Adding SVM Y test-set.")
     new_row = {'Method_Category': "SVM CC test", 'Accuracy': X_test_acc, 'Kappa': X_test_kappa, 'Roc': X_test_roc}
     df_scores = df_scores.append(new_row, ignore_index = True)
     df_scores.to_csv("scores/nondeep.csv", index=False)
 else:
-    print("Updating SVM Y test-set.")
+    print("Updating SVM CC test-set.")
     df_scores.loc[df_scores['Method_Category'] == "SVM CC test"] = "SVM CC test", X_test_acc, X_test_kappa, X_test_roc
     df_scores.to_csv("scores/nondeep.csv", index=False)
 
@@ -157,14 +157,14 @@ else:
 X_val_acc = accuracy_score(X_val_pred, y_val)
 X_val_kappa = cohen_kappa_score(y_val, X_val_pred)
 X_val_roc = roc_auc_score(y_val, X_val_pred)
-print(f'SVM for Y achieved on validation-set: {round(X_val_acc * 100, 1)}% accuracy, a kappa score of {round(X_val_kappa,2)} & roc score of {round(X_val_roc,2)}.')
+print(f'SVM for CC achieved on validation-set: {round(X_val_acc * 100, 1)}% accuracy, a kappa score of {round(X_val_kappa,2)} & roc score of {round(X_val_roc,2)}.')
 if df_scores.loc[df_scores['Method_Category'] == "SVM CC val"].empty:
-    print("Adding SVM Y validation-set.")
+    print("Adding SVM CC validation-set.")
     new_row = {'Method_Category': "SVM CC val", 'Accuracy': X_val_acc, 'Kappa': X_val_kappa, 'Roc': X_val_roc}
     df_scores = df_scores.append(new_row, ignore_index = True)
     df_scores.to_csv("scores/nondeep.csv", index=False)
 else:
-    print("Updating SVM Y test-set.")
+    print("Updating SVM CC test-set.")
     df_scores.loc[df_scores['Method_Category'] == "SVM CC val"] = "SVM CC val", X_val_acc, X_val_kappa, X_val_roc
     df_scores.to_csv("scores/nondeep.csv", index=False)
 
@@ -172,14 +172,14 @@ else:
 X_train_acc = accuracy_score(X_train_pred, y_train)
 X_train_kappa = cohen_kappa_score(y_train, X_train_pred)
 X_train_roc = roc_auc_score(y_train, X_train_pred)
-print(f'SVM for Y achieved on validation-set: {round(X_train_acc * 100, 1)}% accuracy, a kappa score of {round(X_train_kappa,2)} & roc score of {round(X_train_roc,2)}.')
+print(f'SVM for CC achieved on validation-set: {round(X_train_acc * 100, 1)}% accuracy, a kappa score of {round(X_train_kappa,2)} & roc score of {round(X_train_roc,2)}.')
 if df_scores.loc[df_scores['Method_Category'] == "SVM CC train"].empty:
-    print("Adding SVM Y training-set.")
+    print("Adding SVM CC training-set.")
     new_row = {'Method_Category': "SVM CC train", 'Accuracy': X_train_acc, 'Kappa': X_train_kappa, 'Roc': X_train_roc}
     df_scores = df_scores.append(new_row, ignore_index = True)
     df_scores.to_csv("scores/nondeep.csv", index=False)
 else:
-    print("Updating SVM Y test-set.")
+    print("Updating SVM CC test-set.")
     df_scores.loc[df_scores['Method_Category'] == "SVM CC train"] = "SVM CC train", X_train_acc, X_train_kappa, X_train_roc
     df_scores.to_csv("scores/nondeep.csv", index=False)
 
