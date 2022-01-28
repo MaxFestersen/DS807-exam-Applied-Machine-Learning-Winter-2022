@@ -155,14 +155,14 @@ else:
     df_scores.to_csv("scores/nondeep.csv", index=False)
 
 #%% Question 1.2 Problem solving: CC SVM Best model
-svm_poly_best = svm.SVC(kernel='rbf', C = 100, gamma = 'auto')
-svm_poly_best.fit(X_train, y_train)
+svm_best = svm.SVC(kernel='rbf', C = 100, gamma = 'auto')
+svm_best.fit(X_train, y_train)
 
 #%% Question 1.2 Problem solving: CC SVM Best model performance
 # Predictions
-X_test_pred = svm_poly_best.predict(X_test)
-X_val_pred = svm_poly_best.predict(X_val)
-X_train_pred = svm_poly_best.predict(X_train)
+X_test_pred = svm_best.predict(X_test)
+X_val_pred = svm_best.predict(X_val)
+X_train_pred = svm_best.predict(X_train)
 
 # Obtain and check accuracy on test data
 X_test_acc = accuracy_score(X_test_pred, y_test)
@@ -573,24 +573,24 @@ else:
     df_scores.to_csv("scores/nondeep.csv", index=False)
 
 #%% Question 1.2 Problem solving: D SVM Best model
-svm_poly_best = svm.SVC(kernel='rbf', C = 100, gamma = 'auto', decision_function_shape = "ovr", probability = True)
-svm_poly_best.fit(X_train, y_train)
+svm_best = svm.SVC(kernel='rbf', C = 100, gamma = 'auto', decision_function_shape = "ovr", probability = True)
+svm_best.fit(X_train, y_train)
 
 #%% Question 1.2 Problem solving: D SVM Best model performance
 # Predictions
-X_test_pred = svm_poly_best.predict(X_test)
-X_test_pred_proba = svm_Y_gridsearch_res.predict_proba(X_test)
-X_val_pred = svm_poly_best.predict(X_val)
-X_val_pred_proba = svm_Y_gridsearch_res.predict_proba(X_val)
-X_train_pred = svm_poly_best.predict(X_train)
-X_train_pred_proba = svm_Y_gridsearch_res.predict_proba(X_train)
+X_test_pred = svm_best.predict(X_test)
+X_test_pred_proba = svm_best.predict_proba(X_test)
+X_val_pred = svm_best.predict(X_val)
+X_val_pred_proba = svm_best.predict_proba(X_val)
+X_train_pred = svm_best.predict(X_train)
+X_train_pred_proba = svm_best.predict_proba(X_train)
 
 # Obtain and check accuracy on test data
 X_test_acc = accuracy_score(X_test_pred, y_test)
 X_test_kappa = cohen_kappa_score(y_test, X_test_pred)
 X_test_roc = roc_auc_score(y_test, X_test_pred_proba, multi_class='ovr')
 print(f'SVM for D achieved on test-set: {round(X_test_acc * 100, 1)}% accuracy, a kappa score of {round(X_test_kappa,2)} & roc score of {round(X_test_roc,2)}.')
-if df_scores.loc[df_scores['Method_Category'] == "SVM CC test"].empty:
+if df_scores.loc[df_scores['Method_Category'] == "SVM D test"].empty:
     print("Adding SVM D test-set.")
     new_row = {'Method_Category': "SVM D test", 'Accuracy': X_test_acc, 'Kappa': X_test_kappa, 'Roc': X_test_roc}
     df_scores = df_scores.append(new_row, ignore_index = True)
@@ -748,12 +748,12 @@ else:
 
 #%% Question 1.2 Problem solving: Y SVM Best model performance
 # Predictions
-X_test_pred = svm_poly_best.predict(X_test)
-X_test_pred_proba = svm_Y_gridsearch_res.predict_proba(X_test)
-X_val_pred = svm_poly_best.predict(X_val)
-X_val_pred_proba = svm_Y_gridsearch_res.predict_proba(X_val)
-X_train_pred = svm_poly_best.predict(X_train)
-X_train_pred_proba = svm_Y_gridsearch_res.predict_proba(X_train)
+X_test_pred = svm_best.predict(X_test)
+X_test_pred_proba = svm_best.predict_proba(X_test)
+X_val_pred = svm_best.predict(X_val)
+X_val_pred_proba = svm_best.predict_proba(X_val)
+X_train_pred = svm_best.predict(X_train)
+X_train_pred_proba = svm_best.predict_proba(X_train)
 
 # Obtain and check accuracy on test data
 X_test_acc = accuracy_score(X_test_pred, y_test)
@@ -790,14 +790,14 @@ X_train_acc = accuracy_score(X_train_pred, y_train)
 X_train_kappa = cohen_kappa_score(y_train, X_train_pred)
 X_train_roc = roc_auc_score(y_test, X_train_pred_proba, multi_class='ovr')
 print(f'SVM for Y achieved on validation-set: {round(X_train_acc * 100, 1)}% accuracy, a kappa score of {round(X_train_kappa,2)} & roc score of {round(X_train_roc,2)}.')
-if df_scores.loc[df_scores['Method_Category'] == "SVM CC train"].empty:
+if df_scores.loc[df_scores['Method_Category'] == "SVM Y train"].empty:
     print("Adding SVM Y training-set.")
-    new_row = {'Method_Category': "SVM CC train", 'Accuracy': X_train_acc, 'Kappa': X_train_kappa, 'Roc': X_train_roc}
+    new_row = {'Method_Category': "SVM Y train", 'Accuracy': X_train_acc, 'Kappa': X_train_kappa, 'Roc': X_train_roc}
     df_scores = df_scores.append(new_row, ignore_index = True)
     df_scores.to_csv("scores/nondeep.csv", index=False)
 else:
     print("Updating SVM Y test-set.")
-    df_scores.loc[df_scores['Method_Category'] == "SVM CC train"] = "SVM CC train", X_train_acc, X_train_kappa, X_train_roc
+    df_scores.loc[df_scores['Method_Category'] == "SVM Y train"] = "SVM Y train", X_train_acc, X_train_kappa, X_train_roc
     df_scores.to_csv("scores/nondeep.csv", index=False)
 
 
