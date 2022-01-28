@@ -130,7 +130,7 @@ joblib.dump(svm_CC, 'data/q12svmCC.pkl')
 svm_poly_best = svm.SVC(kernel='rbf', C = 100, gamma = 'auto')
 
 # Use both training and validation data to fit it (np.concatenate "stacks" the array like rbind in R)
-svm_poly_best.fit(np.concatenate([X_train, X_val]), np.concatenate([y_train, y_val]))
+svm_poly_best.fit(X_train, y_train)
 
 #%% Question 1.2 Problem solving: CC SVM Best model performance
 # Predictions
