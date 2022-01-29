@@ -8,32 +8,25 @@ Created on Mon Jan 24 11:55:42 2022
 """
 
 #%% Importing libraries
-import pandas as pd
-import numpy as np
-import os
-import matplotlib.pyplot as plt
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-from sklearn import svm, datasets
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-from sklearn.preprocessing import StandardScaler
-from numpy import load
-import joblib
-from sklearn.metrics import accuracy_score, cohen_kappa_score, make_scorer, roc_auc_score
-from sklearn import ensemble # ensemble instead of tree
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-from sklearn.metrics import classification_report
-import seaborn
-#from sklearn.model_selection import RandomizedSearchCV
-from pprint import pprint
-from imblearn.ensemble import BalancedRandomForestClassifier
-from numpy import mean
-from imblearn.pipeline import Pipeline
-from imblearn.over_sampling import SMOTE
-from imblearn.under_sampling import RandomUnderSampler
-from sklearn.model_selection import cross_val_score, RepeatedStratifiedKFold
 from collections import Counter
 import imblearn
 from imblearn.ensemble import BalancedRandomForestClassifier
+from imblearn.over_sampling import SMOTE
+from imblearn.pipeline import Pipeline
+from imblearn.under_sampling import RandomUnderSampler
+import joblib
+import numpy as np
+from numpy import load, mean
+import matplotlib.pyplot as plt
+import os
+import pandas as pd
+from pprint import pprint
+import seaborn
+from sklearn import datasets, ensemble, svm
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.model_selection import cross_val_score, GridSearchCV, RandomizedSearchCV, RepeatedStratifiedKFold
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, cohen_kappa_score, make_scorer, roc_auc_score, classification_report, ConfusionMatrixDisplay, confusion_matrix
 kappa_scorer = make_scorer(cohen_kappa_score)
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
