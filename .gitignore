@@ -135,4 +135,8 @@ archive/
 data/
 exam22_typos.pdf
 checkpoints/
+logs/fit_CC
+logs/fit_Y
+logs/fit_D
+
 
