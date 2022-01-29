@@ -89,6 +89,10 @@ X_train = scaler.fit_transform(X_train)
 X_val = scaler.transform(X_val)
 X_test = scaler.transform(X_test)
 
+#%% Concatenate training and validation
+X_train = np.concatenate((X_train, X_val), axis=0)
+y_train = np.concatenate((y_train, y_val), axis=0)
+
 #%% Anders
 def plot_confusion_matrix(df_confusion):
     x = df_confusion.reindex(columns=[x for x in range(len(Counter(y_test)))], fill_value=0)
