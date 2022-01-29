@@ -76,7 +76,6 @@ STEP_SIZE_TRAIN=train_gen.n//train_gen.batch_size
 STEP_SIZE_VALID=val_gen.n//val_gen.batch_size
 STEP_SIZE_TEST=test_gen.n//test_gen.batch_size
 
-
 #%% Setting up hyperparameter tuning 2
 HP_CONV_LAYER = hp.HParam('conv_layer', hp.IntInterval(2,4))
 HP_DENSE_LAYER = hp.HParam('dense_layer', hp.IntInterval(1,3))
@@ -281,7 +280,31 @@ reduceLR = ReduceLROnPlateau(
     factor=0.2,
     patience=4) # reducing learning rate when val_loss doesn't improve for 3 epochs
 
-#%% Training
+#%% Training no regularization
+params = {'CONV_LAYER': 4, 
+          'NUM_FILTS': 16, 
+          'DENSE_LAYER': 2, 
+          'NUM_UNITS': 64, 
+          'ACTIVATION': 'relu', 
+          'DROPOUT': 0.0}
+
+modelY = final_model(params)
+
+hist = modelY.fit(train_gen,
+            steps_per_epoch=STEP_SIZE_TRAIN,
+            validation_data=val_gen,
+            validation_steps=STEP_SIZE_VALID,
+            epochs=100,
+            callbacks=[tensorboard_callback, modelCheckpoint, earlyStop])
+
+#%% Evaluation
+modelY.load_weights(checkpoint_filepath)
+modelY.evaluate(test_gen) #accuracy 0.8738
+
+#%%
+modelY.save('models/modelY')
+
+#%% Training with regularization
 # best parameters
 params = {'CONV_LAYER': 4, 
           'NUM_FILTS': 16, 
@@ -298,24 +321,22 @@ class_weights = class_weight.compute_class_weight(
 
 train_class_weights = dict(enumerate(class_weights))
 
-STEP_SIZE_TRAIN=train_gen.n//train_gen.batch_size
-STEP_SIZE_VALID=val_gen.n//val_gen.batch_size
+modelY_reg = final_model(params)
 
-modelY = final_model(params)
-
-hist = modelY.fit(train_gen,
+hist_reg = modelY_reg.fit(train_gen,
             steps_per_epoch=STEP_SIZE_TRAIN,
             validation_data=val_gen,
             validation_steps=STEP_SIZE_VALID,
             epochs=100,
-            callbacks=[tensorboard_callback, modelCheckpoint, earlyStop])
+            callbacks=[tensorboard_callback, modelCheckpoint, earlyStop],
+            class_weight=train_class_weights)
 
 #%% Evaluation
-modelY.load_weights(checkpoint_filepath)
-modelY.evaluate(test_gen) #accuracy 0.8422
+modelY_reg.load_weights(checkpoint_filepath)
+modelY_reg.evaluate(test_gen) #accuracy 0.9002
 
 #%%
-modelY.save('models/modelY')
+modelY_reg.save('models/modelY_reg')
 
 #%% With data augmentation
 modelY_aug = final_model(params)
@@ -325,11 +346,12 @@ hist_aug = modelY_aug.fit(train_gen_aug,
             validation_data=val_gen,
             validation_steps=STEP_SIZE_VALID,
             epochs=100,
-            callbacks=[tensorboard_callback, modelCheckpoint, earlyStop])
+            callbacks=[tensorboard_callback, modelCheckpoint, earlyStop],
+            class_weight=train_class_weights)
 
 #%% Evaluation
 modelY_aug.load_weights(checkpoint_filepath)
-modelY_aug.evaluate(test_gen) #accuracy 0.8422
+modelY_aug.evaluate(test_gen) #accuracy 0.9323
 
 #%%
 modelY_aug.save('models/modelY_aug')
@@ -337,6 +359,9 @@ modelY_aug.save('models/modelY_aug')
 #%%
 modelY = tf.keras.models.load_model('models/modelY')
 modelY.evaluate(test_gen)
+
+modelY_reg = tf.keras.models.load_model('models/modelY_reg')
+modelY_reg.evaluate(test_gen)
 
 modelY_aug = tf.keras.models.load_model('models/modelY_aug')
 modelY_aug.evaluate(test_gen)
@@ -364,13 +389,18 @@ def plot_hist(hist, stop_metric, metric, path):
     plt.savefig(path, dpi=300)
     plt.show()
 
-plot_hist(hist, 'val_accuracy', 'accuracy', 'plots/modelY_acc.png')
-plot_hist(hist, 'val_accuracy', 'prc', 'plots/modelY_prc.png')
-plot_hist(hist, 'val_accuracy', 'loss', 'plots/modelY_loss.png')
-plot_hist(hist, 'val_accuracy', 'kappa', 'plots/modelY_kappa.png')
+plot_hist(hist, 'val_accuracy', 'accuracy', 'plots/no_reg/modelY_acc.png')
+plot_hist(hist, 'val_accuracy', 'prc', 'plots/no_reg/modelY_prc.png')
+plot_hist(hist, 'val_accuracy', 'loss', 'plots/no_reg/modelY_loss.png')
+plot_hist(hist, 'val_accuracy', 'kappa', 'plots/no_reg/modelY_kappa.png')
+
+plot_hist(hist_reg, 'val_accuracy', 'accuracy', 'plots/reg/modelY_acc_reg.png')
+plot_hist(hist_reg, 'val_accuracy', 'prc', 'plots/reg/modelY_prc_reg.png')
+plot_hist(hist_reg, 'val_accuracy', 'loss', 'plots/reg/modelY_loss_reg.png')
+plot_hist(hist_reg, 'val_accuracy', 'kappa', 'plots/reg/modelY_kappa_reg.png')
     
-plot_hist(hist_aug, 'val_accuracy', 'accuracy', 'plots/modelY_acc_aug.png')
-plot_hist(hist_aug, 'val_accuracy', 'prc', 'plots/modelY_prc_aug.png')
-plot_hist(hist_aug, 'val_accuracy', 'loss', 'plots/modelY_loss_aug.png')
-plot_hist(hist_aug, 'val_accuracy', 'kappa', 'plots/modelY_kappa_aug.png')
+plot_hist(hist_aug, 'val_accuracy', 'accuracy', 'plots/aug/modelY_acc_aug.png')
+plot_hist(hist_aug, 'val_accuracy', 'prc', 'plots/aug/modelY_prc_aug.png')
+plot_hist(hist_aug, 'val_accuracy', 'loss', 'plots/aug/modelY_loss_aug.png')
+plot_hist(hist_aug, 'val_accuracy', 'kappa', 'plots/aug/modelY_kappa_aug.png')
 

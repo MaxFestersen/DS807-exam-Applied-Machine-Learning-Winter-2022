@@ -281,7 +281,31 @@ reduceLR = ReduceLROnPlateau(
     factor=0.2,
     patience=4) # reducing learning rate when val_loss doesn't improve for 3 epochs
 
-#%% Training
+#%% Training no regularization
+# best parameters
+params = {'CONV_LAYER': 3, 
+          'NUM_FILTS': 16, 
+          'DENSE_LAYER': 1, 
+          'NUM_UNITS': 128, 
+          'ACTIVATION': 'relu', 
+          'DROPOUT': 0.0}
+
+modelD = final_model(params)
+
+hist = modelD.fit(train_gen,
+            steps_per_epoch=STEP_SIZE_TRAIN,
+            validation_data=val_gen,
+            validation_steps=STEP_SIZE_VALID,
+            epochs=100,
+            callbacks=[tensorboard_callback, modelCheckpoint, earlyStop])
+
+#%% Evaluation
+modelD.load_weights(checkpoint_filepath)
+modelD.evaluate(test_gen) #accuracy 0.9112
+
+#%% Saving model
+modelD.save('models/modelD')
+#%% Training with regularization
 # best parameters
 params = {'CONV_LAYER': 3, 
           'NUM_FILTS': 16, 
@@ -298,27 +322,24 @@ class_weights = class_weight.compute_class_weight(
 
 train_class_weights = dict(enumerate(class_weights))
 
-STEP_SIZE_TRAIN=train_gen.n//train_gen.batch_size
-STEP_SIZE_VALID=val_gen.n//val_gen.batch_size
+modelD_reg = final_model(params)
 
-modelD = final_model(params)
-
-hist = modelD.fit(train_gen,
+hist_reg = modelD_reg.fit(train_gen,
             steps_per_epoch=STEP_SIZE_TRAIN,
             validation_data=val_gen,
             validation_steps=STEP_SIZE_VALID,
             epochs=100,
-            callbacks=[tensorboard_callback, modelCheckpoint, earlyStop])
-
+            callbacks=[tensorboard_callback, modelCheckpoint, earlyStop],
+            class_weight=train_class_weights)
 
 #%% Evaluation
-modelD.load_weights(checkpoint_filepath)
-modelD.evaluate(test_gen) #accuracy 0.8422
+modelD_reg.load_weights(checkpoint_filepath)
+modelD_reg.evaluate(test_gen) #accuracy 0.9261
 
 #%% Saving model
-modelD.save('models/modelD')
+modelD_reg.save('models/modelD_reg')
 
-#%% With data augmentation
+#%% Training with data augmentation
 modelD_aug = final_model(params)
 
 hist_aug = modelD_aug.fit(train_gen_aug,
@@ -326,11 +347,12 @@ hist_aug = modelD_aug.fit(train_gen_aug,
             validation_data=val_gen,
             validation_steps=STEP_SIZE_VALID,
             epochs=100,
-            callbacks=[tensorboard_callback, modelCheckpoint, earlyStop])
+            callbacks=[tensorboard_callback, modelCheckpoint, earlyStop],
+            class_weight=train_class_weights)
 
 #%% Evaluation
 modelD_aug.load_weights(checkpoint_filepath)
-modelD_aug.evaluate(test_gen) #accuracy 0.8422
+modelD_aug.evaluate(test_gen) #accuracy 0.9651
 
 #%% saving model
 modelD_aug.save('models/modelD_aug')
@@ -338,6 +360,9 @@ modelD_aug.save('models/modelD_aug')
 #%%
 modelD = tf.keras.models.load_model('models/modelD')
 modelD.evaluate(test_gen)
+
+modelD_reg = tf.keras.models.load_model('models/modelD_reg')
+modelD_reg.evaluate(test_gen)
 
 modelD_aug = tf.keras.models.load_model('models/modelD_aug')
 modelD_aug.evaluate(test_gen)
@@ -365,12 +390,17 @@ def plot_hist(hist, stop_metric, metric, path):
     plt.savefig(path, dpi=300)
     plt.show()
 
-plot_hist(hist, 'val_accuracy', 'accuracy', 'plots/modelD_acc.png')
-plot_hist(hist, 'val_accuracy', 'prc', 'plots/modelD_prc.png')
-plot_hist(hist, 'val_accuracy', 'kappa', 'plots/modelD_kappa.png')
-plot_hist(hist, 'val_accuracy', 'loss', 'plots/modelD_loss.png')
+plot_hist(hist, 'val_accuracy', 'accuracy', 'plots/no_reg/modelD_acc.png')
+plot_hist(hist, 'val_accuracy', 'prc', 'plots/no_reg/modelD_prc.png')
+plot_hist(hist, 'val_accuracy', 'kappa', 'plots/no_reg/modelD_kappa.png')
+plot_hist(hist, 'val_accuracy', 'loss', 'plots/no_reg/modelD_loss.png')
 
-plot_hist(hist_aug, 'val_accuracy', 'accuracy', 'plots/modelD_acc_aug.png')
-plot_hist(hist_aug, 'val_accuracy', 'prc', 'plots/modelD_prc_aug.png')
-plot_hist(hist_aug, 'val_accuracy', 'kappa', 'plots/modelD_kappa_aug.png')
-plot_hist(hist_aug, 'val_accuracy', 'loss', 'plots/modelD_loss_aug.png')
+plot_hist(hist_reg, 'val_accuracy', 'accuracy', 'plots/reg/modelD_acc_reg.png')
+plot_hist(hist_reg, 'val_accuracy', 'prc', 'plots/reg/modelD_prc_reg.png')
+plot_hist(hist_reg, 'val_accuracy', 'kappa', 'plots/reg/modelD_kappa_reg.png')
+plot_hist(hist_reg, 'val_accuracy', 'loss', 'plots/reg/modelD_loss_reg.png')
+
+plot_hist(hist_aug, 'val_accuracy', 'accuracy', 'plots/aug/modelD_acc_aug.png')
+plot_hist(hist_aug, 'val_accuracy', 'prc', 'plots/aug/modelD_prc_aug.png')
+plot_hist(hist_aug, 'val_accuracy', 'kappa', 'plots/aug/modelD_kappa_aug.png')
+plot_hist(hist_aug, 'val_accuracy', 'loss', 'plots/aug/modelD_loss_aug.png')
