@@ -27,12 +27,15 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.model_selection import cross_val_score, GridSearchCV, RandomizedSearchCV, RepeatedStratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, cohen_kappa_score, make_scorer, roc_auc_score, classification_report, ConfusionMatrixDisplay, confusion_matrix
-kappa_scorer = make_scorer(cohen_kappa_score)
+
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 os.chdir("../")
+
+# Create kappa scorer
+kappa_scorer = make_scorer(cohen_kappa_score)
 
 #%% Initate pandas dataframe for comparing results
 if os.path.isfile('scores/nondeep.csv'):
