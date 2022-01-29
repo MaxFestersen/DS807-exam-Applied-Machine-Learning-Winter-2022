@@ -30,10 +30,23 @@ os.chdir("../")
 
 #%% Importing data
 datagen = ImageDataGenerator(rescale=1/255.0)
+
+datagen_aug = ImageDataGenerator(rescale=1/255.0,
+                                 width_shift_range=0.1,
+                                 height_shift_range=0.1)
+
 datagen_test = ImageDataGenerator(rescale=1/255.0)
 batch_size = 32
 
 train_gen = datagen.flow_from_directory('data/split/Y/train', 
+                                        batch_size=batch_size,
+                                        shuffle=True,
+                                        seed=1234,
+                                        class_mode='categorical',
+                                        color_mode='grayscale',
+                                        target_size=(32, 62))
+
+train_gen_aug = datagen_aug.flow_from_directory('data/split/Y/train', 
                                         batch_size=batch_size,
                                         shuffle=True,
                                         seed=1234,
@@ -304,9 +317,29 @@ modelY.evaluate(test_gen) #accuracy 0.8422
 #%%
 modelY.save('models/modelY')
 
+#%% With data augmentation
+modelY_aug = final_model(params)
+
+hist_aug = modelY_aug.fit(train_gen_aug,
+            steps_per_epoch=STEP_SIZE_TRAIN,
+            validation_data=val_gen,
+            validation_steps=STEP_SIZE_VALID,
+            epochs=100,
+            callbacks=[tensorboard_callback, modelCheckpoint, earlyStop])
+
+#%% Evaluation
+modelY_aug.load_weights(checkpoint_filepath)
+modelY_aug.evaluate(test_gen) #accuracy 0.8422
+
+#%%
+modelY_aug.save('models/modelY_aug')
+
 #%%
 modelY = tf.keras.models.load_model('models/modelY')
 modelY.evaluate(test_gen)
+
+modelY_aug = tf.keras.models.load_model('models/modelY_aug')
+modelY_aug.evaluate(test_gen)
 
 #%%
 def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
@@ -318,44 +351,26 @@ df_confusion = pd.crosstab(test_gen.classes, y_test_hat, rownames=['Actual'], co
 plot_confusion_matrix(df_confusion)
 
 #%% Plotting model
-best_epoch = np.argmax(hist.history['val_accuracy'])
 
-plt.plot(hist.history['accuracy'])
-plt.plot(hist.history['val_accuracy'])
-plt.axvline(x=best_epoch)
-plt.title('model accuracy')
-plt.ylabel('accuracy')
-plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
-plt.savefig('plots/modelY_acc.png', dpi=300)
-plt.show()
+def plot_hist(hist, stop_metric, metric, path):
+    best_epoch = np.argmax(hist.history[stop_metric])
+    plt.plot(hist.history[metric])
+    plt.plot(hist.history['val_' + metric])
+    plt.axvline(x=best_epoch)
+    plt.title('model ' + metric)
+    plt.ylabel(metric)
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.savefig(path, dpi=300)
+    plt.show()
 
-plt.plot(hist.history['prc'])
-plt.plot(hist.history['val_prc'])
-plt.axvline(x=best_epoch)
-plt.title('model PRc')
-plt.ylabel('Precision-Recall curve')
-plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
-plt.savefig('plots/modelY_prc.png', dpi=300)
-plt.show()
+plot_hist(hist, 'val_accuracy', 'accuracy', 'plots/modelY_acc.png')
+plot_hist(hist, 'val_accuracy', 'prc', 'plots/modelY_prc.png')
+plot_hist(hist, 'val_accuracy', 'loss', 'plots/modelY_loss.png')
+plot_hist(hist, 'val_accuracy', 'kappa', 'plots/modelY_kappa.png')
+    
+plot_hist(hist_aug, 'val_accuracy', 'accuracy', 'plots/modelY_acc_aug.png')
+plot_hist(hist_aug, 'val_accuracy', 'prc', 'plots/modelY_prc_aug.png')
+plot_hist(hist_aug, 'val_accuracy', 'loss', 'plots/modelY_loss_aug.png')
+plot_hist(hist_aug, 'val_accuracy', 'kappa', 'plots/modelY_kappa_aug.png')
 
-plt.plot(hist.history['loss'])
-plt.plot(hist.history['val_loss'])
-plt.axvline(x=best_epoch)
-plt.title('model loss')
-plt.ylabel('loss')
-plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
-plt.savefig('plots/modelY_loss.png', dpi=300)
-plt.show()
-
-plt.plot(hist.history['kappa'])
-plt.plot(hist.history['val_kappa'])
-plt.axvline(x=best_epoch)
-plt.title('model kappa')
-plt.ylabel('kappa')
-plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
-plt.savefig('plots/modelY_kappa.png', dpi=300)
-plt.show()
