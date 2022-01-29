@@ -56,8 +56,12 @@ test_gen = datagen.flow_from_directory('data/split/Y/test',
                                        shuffle=False)
 
 input_shape=(32, 62, 1)
+output=(11, 'softmax')
+loss='categorical_crossentropy'
+
 STEP_SIZE_TRAIN=train_gen.n//train_gen.batch_size
 STEP_SIZE_VALID=val_gen.n//val_gen.batch_size
+STEP_SIZE_TEST=test_gen.n//test_gen.batch_size
 
 #%% Setting up hyperparameter tuning
 HP_NUM_FILTS = hp.HParam('num_filts', hp.Discrete([8,16,32]))
@@ -147,20 +151,22 @@ for num_filts in HP_NUM_FILTS.domain.values:
                         session_num += 1
 
 #%% final model (not decided yet)
-def final_model(num_units_1, num_units_2, num_units_3, act_func_1, act_func_2):
+def final_model(num_filts, num_units, act_func_1, act_func_2, dropout):
     modelY = Sequential([
-        Conv2D(num_units_1, (3,3), activation=act_func_1, input_shape=input_shape, name='conv_1'),
+        Conv2D(num_filts, (3,3), activation=act_func_1, input_shape=input_shape, name='conv_1'),
         MaxPooling2D(2,2),
-        Conv2D(num_units_2, (3,3), activation=act_func_2, name='conv_2'),
+        Conv2D(num_filts*2, (3,3), activation=act_func_2, name='conv_2'),
         Flatten(),
-        Dense(num_units_3, activation=act_func_1),
+        Dense(num_units, activation=act_func_1),
+        Dropout(dropout),
         Dense(11, activation='sigmoid')
     ])
 
     METRICS = [
         tf.keras.metrics.BinaryAccuracy(name='accuracy'),
         tf.keras.metrics.AUC(name='prc', curve='PR'), # precision-recall curve
-        tfa.metrics.CohenKappa(num_classes=11, name='kappa')
+        tfa.metrics.CohenKappa(num_classes=11, name='kappa'),
+        tf.keras.metrics.AUC(name='ROC', curve='ROC')
     ]
 
     modelY.compile(
@@ -173,7 +179,6 @@ def final_model(num_units_1, num_units_2, num_units_3, act_func_1, act_func_2):
 #%% Callbacks
 log_dir = "logs/fit_Y" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir='logs/fit_Y', histogram_freq=1)  # tensorboard --logdir ./logs
-
 
 checkpoint_filepath = './checkpoints/checkpoint-modelY'
 

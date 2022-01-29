@@ -12,7 +12,7 @@ import pandas as pd
 import tensorflow_addons as tfa
 from tensorboard.plugins.hparams import api as hp
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten, Dropout
+from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPooling2D, Flatten, Dropout
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import datetime
@@ -56,12 +56,14 @@ test_gen = datagen.flow_from_directory('data/split/CC/test',
                                        shuffle=False)
 
 input_shape=(32, 62, 1)
+output=(1, 'sigmoid')
+loss='binary_crossentropy'
 
 STEP_SIZE_TRAIN=train_gen.n//train_gen.batch_size
 STEP_SIZE_VALID=val_gen.n//val_gen.batch_size
 STEP_SIZE_TEST=test_gen.n//test_gen.batch_size
 
-#%% Setting up hyperparameter tuning
+#%% Setting up hyperparameter tuning 1
 HP_NUM_FILT = hp.HParam('num_filt', hp.Discrete([8,16,32]))
 HP_NUM_UNITS = hp.HParam('num_units', hp.Discrete([128,256,512]))
 HP_ACT_FUNC = hp.HParam('activation_func', hp.Discrete(['relu', 'tanh']))
@@ -80,9 +82,8 @@ with tf.summary.create_file_writer('logs/hparam_tuning_CC_reg').as_default():
                  hp.Metric(METRIC_ACC, display_name='Accuracy'),
                  hp.Metric(METRIC_ROC.name, display_name=METRIC_ROC.name)],
     )
-
+    
 def train_model(hparams):
-    num_filt = int(hparams[HP_NUM_FILT])
     model = Sequential([
         Conv2D(num_filt, (3,3), activation=hparams[HP_ACT_FUNC], input_shape=input_shape),
         MaxPooling2D(2,2),
@@ -150,21 +151,24 @@ for num_filt in HP_NUM_FILT.domain.values:
                         run('logs/hparam_tuning_CC_reg/' + run_name, hparams)
                         session_num += 1
 
+
 #%% final model (not decided yet)
-def final_model(num_units_1, num_units_2, num_units_3, act_func_1, act_func_2):
+def final_model(num_filts, num_units, act_func_1, act_func_2, dropout):
     modelCC = Sequential([
-        Conv2D(num_units_1, (3,3), activation=act_func_1, input_shape=input_shape, name='conv_1'),
+        Conv2D(num_filts, (3,3), activation=act_func_1, input_shape=input_shape, name='conv_1'),
         MaxPooling2D(2,2),
-        Conv2D(num_units_2, (3,3), activation=act_func_2, name='conv_2'),
+        Conv2D(num_filts*2, (3,3), activation=act_func_2, name='conv_2'),
         Flatten(),
-        Dense(num_units_3, activation=act_func_1),
+        Dense(num_units, activation=act_func_1),
+        Dropout(dropout),
         Dense(1, activation='sigmoid')
     ])
 
     METRICS = [
         tf.keras.metrics.BinaryAccuracy(name='accuracy'),
         tf.keras.metrics.AUC(name='prc', curve='PR'), # precision-recall curve
-        tfa.metrics.CohenKappa(num_classes=2, name='kappa')
+        tfa.metrics.CohenKappa(num_classes=2, name='kappa'),
+        tf.keras.metrics.AUC(name='ROC', curve='ROC')
     ]
 
     modelCC.compile(
@@ -205,7 +209,7 @@ class_weights = class_weight.compute_class_weight(
 
 train_class_weights = dict(enumerate(class_weights))
 
-modelCC = final_model(32, 64, 512, 'relu', 'tanh')
+modelCC = final_model(32, 256, 'relu', 'tanh', 0.2)
 
 hist = modelCC.fit(train_gen,
             steps_per_epoch=STEP_SIZE_TRAIN,
