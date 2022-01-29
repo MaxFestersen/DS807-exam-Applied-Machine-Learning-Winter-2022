@@ -33,14 +33,13 @@ df['D'] = np.select([(df[1].astype(str).str.len()>1) & (df[1].astype(str).str.le
 df['Y'] = np.select([(df[1].astype(str).str.len()>1) & (df[1].astype(str).str.len()<5)], [df[1].astype(str).str[-1].astype(int)], default=10)
 
 #%% Plotting class distributions
-sns.histplot(df['CC'])
-plt.savefig('plots/CC_dist.png', dpi=300)
-plt.figure()
-sns.histplot(df['D'])
-plt.savefig('plots/D_dist.png', dpi=300)
-plt.figure()
-sns.histplot(df['Y'])
-plt.savefig('plots/Y_dist.png', dpi=300)
+
+fig, axs = plt.subplots(1, 3, figsize=(18, 5))
+sns.histplot(df['CC'], ax=axs[0])
+sns.histplot(df['D'], ax=axs[1])
+sns.histplot(df['Y'], ax=axs[2])
+
+fig.savefig('plots/class_distributions.png', dpi=300)
 
 #%% reassign 5,6,7,8,9 to class 10 in D
 df.loc[df.D > 4, 'D'] = 10
