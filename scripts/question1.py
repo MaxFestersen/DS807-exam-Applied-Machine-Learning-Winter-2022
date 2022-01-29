@@ -59,7 +59,6 @@ print("Discussion is done in report.")
 #%% Question 1.2
 print("Use one of the methods above to solve the problem. A combination of two or all three of the methods may also be used, if you believe this is better (regardless of whether you use one or multiple methods, this must be motivated).")
 
-#%% Load numpy array from npy file - Anders
 #%% Load numpy array from npy file - CC
 X_train = load('data/X_train_CC.npy')
 y_train = load('data/y_train_CC.npy')
