@@ -364,7 +364,7 @@ df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['P
 plot_confusion_matrix(df_confusion)
 
 #%% Question 1.2 Problem solving: D
-#%% Question 1.2 Problem solving: D SVM
+#%% Question 1.2 Problem solving: D SVM - Max
 #%% Question 1.2 Problem solving: D SVM gridsearch - Scoring: balanced_accuracy
 parameters = {'kernel':['rbf'], 'C':[10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr']}
 svc = svm.SVC(probability=True)
@@ -464,7 +464,7 @@ df_confusion = pd.crosstab(y_test, y_test_hat_D_Tuned, rownames=['Actual'], coln
 plot_confusion_matrix(df_confusion)
 #%% Question 1.2 Problem solving: Y
 metrics.cohen_kappa_score
-#%% Question 1.2 Problem solving: Y SVM
+#%% Question 1.2 Problem solving: Y SVM - Max
 #%% Question 1.2 Problem solving: Y SVM gridsearch
 parameters = {'kernel':['rbf'], 'C':[1, 10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr']}
 svc = svm.SVC(probability=True)
