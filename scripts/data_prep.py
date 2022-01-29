@@ -182,3 +182,31 @@ save('data/X_test_Y.npy', X_test_Y)
 save('data/y_test_Y.npy', y_test_Y)
 save('data/X_val_Y.npy', X_val_Y)
 save('data/y_val_Y.npy', y_val_Y)
+
+#%% Find common training images
+#%% Find images and names in folders
+files_all = []
+files_by_category = {}
+files_by_subcategory = {}
+paths = ["data/split/CC/test", "data/split/D/test", "data/split/Y/test"]
+for path in paths:
+    for (dirpath, dirnames, filenames) in os.walk(path):
+        if len(dirnames)>=2:
+            continue
+        #print(dirpath)
+        files_all.extend(filenames)
+        cat = dirpath.split("data/split/")[1]
+        cat = cat.split("/")[0]
+        subcat = dirpath.split("\\")[1]
+        cat_string = cat + " " + subcat
+        if cat in files_by_category:
+            files_by_category[cat] = files_by_category[cat] + filenames
+        else:
+            files_by_category[cat] = filenames
+        if cat_string in files_by_category:
+            files_by_subcategory[cat_string] = files_by_subcategory[cat_string] + filenames
+        else:
+            files_by_subcategory[cat_string] = filenames
+
+#%% Find matches
+print(set(files_by_category["CC"]) & set(files_by_category["D"]) & set(files_by_category["Y"]))
