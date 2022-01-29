@@ -28,16 +28,16 @@ from sklearn.model_selection import cross_val_score, GridSearchCV, RandomizedSea
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score, cohen_kappa_score, make_scorer, roc_auc_score, classification_report, ConfusionMatrixDisplay, confusion_matrix
 
-# Set path to parrent location of current file
+# Set path to parrent location of current file - Max
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 os.chdir("../")
 
-# Create kappa scorer
+# Create kappa scorer - Anders
 kappa_scorer = make_scorer(cohen_kappa_score)
 
-#%% Initate pandas dataframe for comparing results
+#%% Initate pandas dataframe for comparing results - Max
 if os.path.isfile('scores/nondeep.csv'):
     df_scores = pd.read_csv('scores/nondeep.csv')
 else:
@@ -83,7 +83,7 @@ y_test = load('data/y_test_Y.npy')
 X_val = load('data/X_val_Y.npy')
 y_val = load('data/y_val_Y.npy')
 
-#%% Scaling data
+#%% Scaling data - Alexander
 scaler = StandardScaler()
 X_train = scaler.fit_transform(X_train)
 X_val = scaler.transform(X_val)
@@ -93,7 +93,7 @@ X_test = scaler.transform(X_test)
 X_train = np.concatenate((X_train, X_val), axis=0)
 y_train = np.concatenate((y_train, y_val), axis=0)
 
-#%% Anders
+#%% Plot confusion matrix - Anders
 def plot_confusion_matrix(df_confusion):
     x = df_confusion.reindex(columns=[x for x in range(len(Counter(y_test)))], fill_value=0)
     seaborn.heatmap(x, annot=True, fmt='d', cmap='Blues')
@@ -111,7 +111,7 @@ def plot_confusion_matrix(df_confusion):
 #plot_confusion_matrix(df_confusion)
 
 #%% Question 1.2 Problem solving: CC
-#%% Question 1.2 Problem solving: CC SVM gridsearch
+#%% Question 1.2 Problem solving: CC SVM gridsearch - Max
 parameters = {'kernel':('rbf', 'linear', 'poly'), 'C':[1, 10, 100], 'gamma':['auto', 'scale']}
 svc = svm.SVC()
 svm_CC = GridSearchCV(svc, 
@@ -252,9 +252,8 @@ else:
 #     print("Updating SVM CC test-set.")
 #     df_scores.loc[df_scores['Method_Category'] == "SVM CC train"] = "SVM CC train", X_train_acc, X_train_kappa, X_train_roc
 #     df_scores.to_csv("scores/nondeep.csv", index=False)
-
+#%% Question 1.2 Problem solving: CC RF - Anders
 #%% Making tuning-grid for RF and GB - Anders
-
 # Number of trees in random forest
 n_estimators = [int(x) for x in np.linspace(start = 200, stop = 2000, num = 10)]
 # Number of features to consider at every split
@@ -295,7 +294,7 @@ random_grid_GB = {'max_depth': max_depth,
 pprint(random_grid_RF_CC)
 pprint(random_grid_RF)
 pprint(random_grid_GB)
-#%% Question 1.2 Problem solving: CC RF - Anders
+
 #%% Standard model without tuning
 # Initialize
 rf_std_CC = ensemble.RandomForestClassifier(random_state=(42))
@@ -343,6 +342,7 @@ print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a
 # confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_rf_CC_ROC, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+
 #%% load model Kappa
 rf_CC_kappa = joblib.load('data/q12rfCC_make_scorer(cohen_kappa_score).pkl')
 print(rf_CC_kappa.best_params_, rf_CC_kappa.best_score_)
@@ -359,7 +359,8 @@ print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a
 # confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_rf_CC_kappa, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
-#%%
+
+#%% ??? 
 # Initialize
 for i in metrics: 
     rf_CC_bal = imblearn.ensemble.BalancedRandomForestClassifier(random_state=42)
@@ -381,6 +382,7 @@ print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a
 # confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_CC_bal_kappa, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+
 #%%
 # Predict
 rf_CC_bal_ROC = joblib.load('data/q12rfCC_bal_roc_auc.pkl')
@@ -394,6 +396,7 @@ print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a
 # confusion matrix
 df_confusion = pd.crosstab(y_test, y_test_hat_CC_bal_ROC, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+
 #%% Question 1.2 Problem solving: CC B - Anders
 GB_CC_std = ensemble.HistGradientBoostingClassifier(random_state=42)
 # Fit
@@ -429,7 +432,7 @@ roc_auc = roc_auc_score(y_test, y_test_hat_GB_CC)
 print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a kappa score of {round(kappa,3)} and roc_auc of {round(roc_auc,3)}.''')
 df_confusion = pd.crosstab(y_test, y_test_hat_GB_CC, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
-#%%
+#%% ???
 for i in metrics:
     GB_CC = ensemble.HistGradientBoostingClassifier(random_state=42)
     # Random search of parameters, using 3 fold cross validation, 
@@ -474,6 +477,7 @@ roc_auc = roc_auc_score(y_test, y_test_hat)
 print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy a kappa score of {round(kappa,3)} and roc_auc of {round(roc_auc,3)}.''')
 df_confusion = pd.crosstab(y_test, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
+
 #%% Question 1.2 Problem solving: D
 #%% Question 1.2 Problem solving: D SVM
 #%% Question 1.2 Problem solving: D SVM gridsearch - Scoring: balanced_accuracy
