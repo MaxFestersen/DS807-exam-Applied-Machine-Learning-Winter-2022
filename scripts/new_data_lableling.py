@@ -76,6 +76,15 @@ sns.histplot(df_n_labels['D'], bins=6, binwidth=1)
 plt.savefig('plots/D_dist_new_test2.png', dpi=300)
 plt.figure()
 sns.histplot(df_n_labels['Y'])
+plt.figure()
+
+#%% Plotting class distributions
+fig, axs = plt.subplots(1, 3, figsize=(18, 5))
+sns.histplot(df_n_labels['CC'], ax=axs[0])
+sns.histplot(df_n_labels['D'], ax=axs[1])
+sns.histplot(df_n_labels['Y'], ax=axs[2])
+
+fig.savefig('plots/class_distributions_test2.png', dpi=300)
 
 #%% Saving new .csv
 df_n_labels.to_csv("labels/Digit_String_2_labels_formatted.csv", index=False)
