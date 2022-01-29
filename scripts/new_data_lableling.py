@@ -26,3 +26,11 @@ files = files[:no_of_files]
 for name in files:
     print(name)
     shutil.copyfile(os.path.join("data/Digit_String_2 (published)", name), os.path.join("data/newsplit/", name))
+
+#%% Get filenames from folder and sort them
+files = []
+
+for (dirpath, dirnames, filenames) in os.walk("data/newsplit/"):
+    files.extend(filenames)
+    break
+print(files)
