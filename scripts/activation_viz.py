@@ -10,6 +10,13 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 from numpy import expand_dims
+import os
+
+# Set path to parrent location of current file
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+os.chdir("../")
 
 
 model = load_model('models/modelD_aug')
@@ -23,4 +30,5 @@ for i in range(16):
     ax = plt.subplot(4, 4, i + 1); 
     plt.axis('off'); 
     plt.imshow(model.get_layer('conv2d_50')(img)[0, :, :, i])
-    
+
+plt.savefig('plots/activation_viz.png', dpi=300)
