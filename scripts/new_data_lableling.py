@@ -82,8 +82,8 @@ fig.savefig('plots/class_distributions_test2.png', dpi=300)
 df_n_labels.to_csv("labels/Digit_String_2_labels_formatted.csv", index=False)
 
 #%% Rezising
-y_resize = 130
-x_resize  = 250
+y_resize = 32
+x_resize  = 62
 
 for path in df_n_labels['path']:
     image = Image.open(path).convert('L') # opens image and converts to grayscale
