@@ -2,7 +2,7 @@
 """
 Created on Fri Jan 28 01:37:23 2022
 
-@author: A
+@author: Anders
 """
 #%% Importing libraries
 import numpy as np
@@ -57,53 +57,7 @@ test_gen_CC = datagen.flow_from_directory('data/split/CC/test',
                                        target_size=(32, 62),
                                        shuffle=False)
 
-#%%
-train_gen_D = datagen.flow_from_directory('data/split/D/train', 
-                                        batch_size=batch_size,
-                                        shuffle=True,
-                                        seed=1234,
-                                        class_mode='binary',
-                                        color_mode='grayscale',
-                                        target_size=(32, 62))
 
-train_gen_D = datagen.flow_from_directory('data/split/D/val', 
-                                      batch_size=batch_size,
-                                      shuffle=True,
-                                      seed=1234,
-                                      class_mode='binary',
-                                      color_mode='grayscale',
-                                      target_size=(32, 62))
-
-train_gen_D = datagen.flow_from_directory('data/split/D/test',
-                                       batch_size=batch_size,
-                                       class_mode='binary',
-                                       color_mode='grayscale',
-                                       target_size=(32, 62),
-                                       shuffle=False)
-
-#%%
-train_gen_Y = datagen.flow_from_directory('data/split/Y/train', 
-                                        batch_size=batch_size,
-                                        shuffle=True,
-                                        seed=1234,
-                                        class_mode='binary',
-                                        color_mode='grayscale',
-                                        target_size=(32, 62))
-
-train_gen_Y = datagen.flow_from_directory('data/split/Y/val', 
-                                      batch_size=batch_size,
-                                      shuffle=True,
-                                      seed=1234,
-                                      class_mode='binary',
-                                      color_mode='grayscale',
-                                      target_size=(32, 62))
-
-train_gen_Y = datagen.flow_from_directory('data/split/Y/test',
-                                       batch_size=batch_size,
-                                       class_mode='binary',
-                                       color_mode='grayscale',
-                                       target_size=(32, 62),
-                                       shuffle=False)
 
 input_shape=(32, 62, 1)
 #%%
@@ -119,26 +73,6 @@ for i in ['CC','D','Y']:
                                            color_mode='grayscale',
                                            target_size=(32, 62))
     
-    
-#%%
-for _ in range(5):
-    img, label = dir_It.next()
-    print(img.shape)   #  (1,256,256,3)
-    plt.imshow(img[0])
-    plt.show()
-    
-#%%    
-
-img, label = test_gen_CC.next()
-image = plt.imshow(img[0])
-plt.show()    
- 
-#%%
-img, label = test_gen_CC.next()
-    #print(img.shape)   #  (1,256,256,3)
-    plt.imshow(img[0])
-    plt.show()   
-#%%    
     fig, ax = plt.subplots(nrows=1, ncols=4, figsize=(15,15))
     for i in range(4):
          image = next(aug_iter)[0].astype('uint8')
@@ -210,13 +144,14 @@ epochs = 20  # @param {type: "slider", min:8, max:80}
 hist = model.fit(train_gen_CC, validation_data=val_gen_CC, epochs=epochs, verbose=1)
 plot_hist(hist)
 #%%
-KERAS_MODEL_NAME = "FWL_Model.hdf5"
+KERAS_MODEL_NAME = "FWL_Head.hdf5"
 #model.save('exercise-nn-saveload')
-keras.models.save_model(model, KERAS_MODEL_NAME)
+tf.keras.models.save_model(model, KERAS_MODEL_NAME)
+model_reload = tf.keras.models.load_model('FWL_Head.hdf5')
 #%%
 def unfreeze_model(model):
-    # We unfreeze the top 20 layers while leaving BatchNorm layers frozen
-    for layer in model.layers[-2000:]:
+    # We unfreeze layers while leaving BatchNorm layers frozen
+    for layer in model.layers[:]:
         if not isinstance(layer, tf.keras.layers.BatchNormalization):
             layer.trainable = True
 
@@ -231,9 +166,20 @@ unfreeze_model(model)
 epochs = 10  
 hist = model.fit(train_gen_CC, validation_data=val_gen_CC, epochs=epochs, verbose=1)
 plot_hist(hist)
-joblib.dump(model, 'data/model_FWL.pkl')
-model.save('model_FW')
-model2 = tf.keras.models.load_model('logs_exercise_nn_saveload')
+plot_loss(hist)
+KERAS_MODEL_NAME = "FWL_model_final.hdf5"
+#model.save('exercise-nn-saveload')
+tf.keras.models.save_model(model, KERAS_MODEL_NAME)
+model_reload = tf.keras.models.load_model('FWL_model_final.hdf5')
+#%%
+model_reload.evaluate(test_gen_CC)
+#%%
+
+y_test_hat = np.where(model_reload.predict(test_gen_CC) > 0.5, 1, 0).flatten()
+df_confusion = pd.crosstab(test_gen_CC.classes, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
+plot_confusion_matrix(df_confusion)
+
+
 #%%
 plot_loss(hist)
 y_hat = model.predict(test_gen_CC)
@@ -244,21 +190,8 @@ model.save('logs_exercise_nn_saveload/model_FWL')
 model.fit(train_gen_CC, validation_data=val_gen_CC, epochs=5, verbose=1, callbacks=[tensorboard_callback])
 model.save('logs_exercise_nn_saveload/model_FWL')
 
-#%% Excited layers
-import PIL
-from tensorflow.keras.preprocessing.image import img_to_array
-from numpy import expand_dims
-img = PIL.Image.open('data/DIDA_2/46.jpg')
-img = img_to_array(img)
-img = expand_dims(img, axis=0)
-plt.figure(figsize=(10, 10))
-for i in range(16):
-    ax = plt.subplot(4, 4, i + 1); 
-    plt.axis('off'); 
-    plt.imshow(model.get_layer(last_conv_layer_name).output)(img)[0, :, :, i])
-    #model.get_layer(last_conv_layer_name).output
-    
-    
+"""#%% Excited layers
+i 
 #%%
 from skimage import io
 from PIL import Image

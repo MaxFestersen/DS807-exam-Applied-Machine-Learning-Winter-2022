@@ -2,17 +2,15 @@
 """
 Created on Fri Jan 28 16:22:54 2022
 
-@author: A
+@author: Anders
 """
 import pandas as pd
 import joblib
 from numpy import load
 from collections import Counter
-#%%
+#%% Anders
 df_new_data = pd.read_csv('labels/Digit_String_2_labels_formatted.csv')
-
 y_new_data = df_new_data[['CC', 'D', 'Y']]
-
 X_unseen = load('data/X_unseen.npy')
 #%% Anders
 def combine_model(x):
