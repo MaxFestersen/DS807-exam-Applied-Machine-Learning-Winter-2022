@@ -375,7 +375,7 @@ y_test_hat = np.argmax(modelD.predict(test_gen), axis=1).flatten()
 df_confusion = pd.crosstab(test_gen.classes, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 
 plot_confusion_matrix(df_confusion)
-
+plt.savefig('plots/confusion_cnn_D.png', dpi=300)
 #%% Plotting model
 
 def plot_hist(hist, stop_metric, metric, path):
