@@ -371,6 +371,29 @@ def plot_confusion_matrix(df_confusion, title='Confusion matrix'):
     sns.heatmap(df_confusion, annot=True, fmt='d', cmap='Blues')
 
 y_test_hat = np.argmax(modelY.predict(test_gen), axis=1).flatten()
+y_test_hat[y_test_hat == 2] = 11
+y_test_hat[y_test_hat == 3] = 2
+y_test_hat[y_test_hat == 4] = 3
+y_test_hat[y_test_hat == 5] = 4
+y_test_hat[y_test_hat == 6] = 5
+y_test_hat[y_test_hat == 7] = 6
+y_test_hat[y_test_hat == 8] = 7
+y_test_hat[y_test_hat == 9] = 8
+y_test_hat[y_test_hat == 10] = 9
+y_test_hat[y_test_hat == 11] = 10
+
+test_labels = test_gen.classes
+test_labels[test_labels == 2] = 11
+test_labels[test_labels == 3] = 2
+test_labels[test_labels == 4] = 3
+test_labels[test_labels == 5] = 4
+test_labels[test_labels == 6] = 5
+test_labels[test_labels == 7] = 6
+test_labels[test_labels == 8] = 7
+test_labels[test_labels == 9] = 8
+test_labels[test_labels == 10] = 9
+test_labels[test_labels == 11] = 10
+
 df_confusion = pd.crosstab(test_gen.classes, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 
 plot_confusion_matrix(df_confusion)
