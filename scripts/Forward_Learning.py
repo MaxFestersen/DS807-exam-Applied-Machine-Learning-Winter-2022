@@ -25,6 +25,7 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 os.chdir("../")
+
 #%% Importing data
 #%%
 %load_ext tensorboard
@@ -244,6 +245,9 @@ model.save('logs_exercise_nn_saveload/model_FWL')
 model.fit(train_gen_CC, validation_data=val_gen_CC, epochs=5, verbose=1, callbacks=[tensorboard_callback])
 model.save('logs_exercise_nn_saveload/model_FWL')
 
+#%% Load model 
+model = tf.keras.models.load_model('FWL_Model.hdf5')
+
 #%% Excited layers
 import PIL
 from tensorflow.keras.preprocessing.image import img_to_array
@@ -255,7 +259,7 @@ plt.figure(figsize=(10, 10))
 for i in range(16):
     ax = plt.subplot(4, 4, i + 1); 
     plt.axis('off'); 
-    plt.imshow(model.get_layer(last_conv_layer_name).output)(img)[0, :, :, i])
+    plt.imshow(model.get_layer(last_conv_layer_name).output)(img)[0, :, :, i]
     #model.get_layer(last_conv_layer_name).output
     
     
