@@ -40,7 +40,7 @@ else:
     df_scores.to_csv("scores/nondeep.csv", index=False)
 
 #%% Result handler
-def add_model_score(name, model, df_scores, svm_multi_class):
+def add_model_score(name, model, df_scores, svm_multi_class): # ROC requires multiclass parameters.
     X_test_pred = model.predict(X_test)
     X_train_pred = model.predict(X_train)
 
