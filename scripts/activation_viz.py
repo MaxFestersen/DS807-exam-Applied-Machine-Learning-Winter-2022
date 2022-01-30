@@ -32,3 +32,4 @@ for i in range(16):
     plt.imshow(model.get_layer('conv2d_50')(img)[0, :, :, i])
 
 plt.savefig('plots/activation_viz.png', dpi=300)
+

@@ -291,7 +291,6 @@ params = {'CONV_LAYER': 4,
           'ACTIVATION': 'tanh', 
           'DROPOUT': 0.0}
 
-
 modelCC = final_model(params)
 
 hist = modelCC.fit(train_gen,
@@ -379,7 +378,7 @@ y_test_hat = np.where(modelCC.predict(test_gen) > 0.5, 1, 0).flatten()
 df_confusion = pd.crosstab(test_gen.classes, y_test_hat, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 
 plot_confusion_matrix(df_confusion)
-
+plt.savefig('plots/confusion_cnn_CC.png', dpi=300)
 #%% Plotting model
 
 def plot_hist(hist, stop_metric, metric, path):

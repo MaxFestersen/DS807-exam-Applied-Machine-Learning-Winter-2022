@@ -45,21 +45,14 @@ else:
     os.makedirs('scores/', exist_ok=True)
     df_scores.to_csv("scores/nondeep.csv", index=False)
 
-
-#%% Question 1
-print("Use non-deep learning to perform image classification according to the CC-D-Y modelling strategy. Specifically, you must:")
-
-#%% Question 1.1
-print("Discuss how the problem can be solved using support vector machines, random forests, and boosting (discuss each method separately).")
-print("Discussion is done in report.")
-# SVM er godt til at lave en baseline test. Det er nemt at sætte op, men vi får ikke andet end accuracy.
-# Random forrest er meget nem at forstå logikken for indelingen. Så vi kan prøve at se hvilken af de 2 performer bedst.
-# Boosting benytter mange modeller og anvender gennemsnit. Det kan være vi har en langsom learner, hvor det fungerer godt.
-
 #%% Question 1.2
+
 print("Use one of the methods above to solve the problem. A combination of two or all three of the methods may also be used, if you believe this is better (regardless of whether you use one or multiple methods, this must be motivated).")
 
 #%% Load numpy array from npy file - CC - Anders
+
+#%% Load numpy array from npy file - CC
+
 X_train = load('data/X_train_CC.npy')
 y_train = load('data/y_train_CC.npy')
 X_test = load('data/X_test_CC.npy')
@@ -119,10 +112,10 @@ svm_CC.fit(np.concatenate((X_train, X_val), axis=0), np.concatenate((y_train, y_
 results = pd.DataFrame(svm_CC.cv_results_)
 print(results[results['mean_test_score'] == results['mean_test_score'].min()])
 
-#%% Question 1.2 Problem solving: CC SVM gridsearch - Save results
+#%% Question 1.2 Problem solving: CC SVM gridsearch - Save results - Max
 joblib.dump(svm_CC, 'data/q12svmCC.pkl')
 
-#%% Question 1.2 Problem solving: CC SVM gridsearch - Predictions
+#%% Question 1.2 Problem solving: CC SVM gridsearch - Predictions - Max
 #predictions = svm_CC.predict(X_test)
 
 #print(svm_CC.best_estimator_)
@@ -365,7 +358,7 @@ plot_confusion_matrix(df_confusion)
 
 #%% Question 1.2 Problem solving: D
 #%% Question 1.2 Problem solving: D SVM - Max
-#%% Question 1.2 Problem solving: D SVM gridsearch - Scoring: balanced_accuracy
+#%% Question 1.2 Problem solving: D SVM gridsearch - Scoring: balanced_accuracy - Max
 parameters = {'kernel':['rbf'], 'C':[10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr']}
 svc = svm.SVC(probability=True)
 svm_D = GridSearchCV(svc,
@@ -377,17 +370,17 @@ svm_D.fit(np.concatenate((X_train, X_val), axis=0), np.concatenate((y_train, y_v
 results = pd.DataFrame(svm_D.cv_results_)
 print(results[results['mean_test_score'] == results['mean_test_score'].min()])
 
-#%% Question 1.2 Problem solving: D SVM gridsearch - Save results
+#%% Question 1.2 Problem solving: D SVM gridsearch - Save results - Max
 joblib.dump(svm_D, 'data/q12svmD.pkl')
 
-#%% Question 1.2 Problem solving: D SVM gridsearch - Prediction
+#%% Question 1.2 Problem solving: D SVM gridsearch - Prediction - Max
 # predictions = svm_D.predict(X_test)
 # proba_pred = svm_D.predict_proba(X_test)
 #print(svm_D.best_estimator_)
 #print(svm_D.best_params_)
 #print(svm_D(y_test, predictions))
 
-#%% Question 1.2 Problem solving: D SVM Best model
+#%% Question 1.2 Problem solving: D SVM Best model - Max
 svm_best = svm.SVC(kernel='rbf', C = 100, gamma = 'auto', decision_function_shape = "ovr", probability = True)
 svm_best.fit(X_train, y_train)
 
@@ -465,7 +458,7 @@ plot_confusion_matrix(df_confusion)
 #%% Question 1.2 Problem solving: Y
 metrics.cohen_kappa_score
 #%% Question 1.2 Problem solving: Y SVM - Max
-#%% Question 1.2 Problem solving: Y SVM gridsearch
+#%% Question 1.2 Problem solving: Y SVM gridsearch - Max
 parameters = {'kernel':['rbf'], 'C':[1, 10, 100], 'gamma':['auto', 'scale'], 'decision_function_shape':['ovr']}
 svc = svm.SVC(probability=True)
 svm_Y = GridSearchCV(svc, 
@@ -477,10 +470,10 @@ svm_Y.fit(np.concatenate((X_train, X_val), axis=0), np.concatenate((y_train, y_v
 results = pd.DataFrame(svm_Y.cv_results_)
 print(results[results['mean_test_score'] == results['mean_test_score'].min()])
 
-#%% Question 1.2 Problem solving: Y SVM gridsearch - Save results
+#%% Question 1.2 Problem solving: Y SVM gridsearch - Save results - Max
 joblib.dump(svm_Y, 'data/q12svmY.pkl')
 
-#%% Question 1.2 Problem solving: Y SVM gridsearch - Predictions
+#%% Question 1.2 Problem solving: Y SVM gridsearch - Predictions - Max
 # predictions = svm_Y.predict(X_test)
 # proba_pred = svm_Y.predict_proba(X_test)
 
@@ -488,7 +481,7 @@ joblib.dump(svm_Y, 'data/q12svmY.pkl')
 #print(svm_Y.best_params_)
 #print(svm_Y(y_test, predictions))
 
-#%% Question 1.2 Problem solving: Y SVM Best model
+#%% Question 1.2 Problem solving: Y SVM Best model - Max
 svm_best = svm.SVC(kernel='rbf', C = 10, gamma = 'auto', decision_function_shape = "ovr", probability = True)
 svm_best.fit(X_train, y_train)
 
@@ -562,16 +555,4 @@ kappa = cohen_kappa_score(y_test, y_test_hat_Y_Tuned)
 print(f'''RF with tuned settings achieved {round(accuracy * 100, 1)}% accuracy and a kappa score of {round(kappa,1)}.''')
 df_confusion = pd.crosstab(y_test, y_test_hat_Y_Tuned, rownames=['Actual'], colnames=['Predicted'],dropna=False)
 plot_confusion_matrix(df_confusion)
-#%% Question 1.2 Performance
-print("Calculate and report the method’s performance on the training, validation, and test data.")
 
-#%% Question 1.2 Performance: CC
-
-#%% Question 1.2 Performance: D
-
-
-#%% Question 1.2 Performance: Y
-
-#%% Question 1.2 Performance-evaluation
-print("Does the performance differ between the different sets? If yes, does this surprise you (explain why or why not)?")
-print("Evaluation of performance is done in report.")
