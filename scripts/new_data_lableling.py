@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Moving random subset of new images
+
+@author Max
 """
 
 #%% Importing libraries
