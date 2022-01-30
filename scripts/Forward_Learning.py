@@ -30,8 +30,8 @@ os.chdir("../")
 %load_ext tensorboard
 %tensorboard --logdir logs_exercise_nn_saveload --port 5678
 #%%
-datagen = ImageDataGenerator(rescale=1/255)
-datagen_test = ImageDataGenerator(rescale=1/255)
+datagen = ImageDataGenerator() # EfficientNet input range [0,255]
+datagen_test = ImageDataGenerator() # EfficientNet input range [0,255]
 batch_size = 64
 
 train_gen_CC = datagen.flow_from_directory('data/split/CC/train', 
@@ -119,6 +119,26 @@ for i in ['CC','D','Y']:
                                            color_mode='grayscale',
                                            target_size=(32, 62))
     
+    
+#%%
+for _ in range(5):
+    img, label = dir_It.next()
+    print(img.shape)   #  (1,256,256,3)
+    plt.imshow(img[0])
+    plt.show()
+    
+#%%    
+
+img, label = test_gen_CC.next()
+image = plt.imshow(img[0])
+plt.show()    
+ 
+#%%
+img, label = test_gen_CC.next()
+    #print(img.shape)   #  (1,256,256,3)
+    plt.imshow(img[0])
+    plt.show()   
+#%%    
     fig, ax = plt.subplots(nrows=1, ncols=4, figsize=(15,15))
     for i in range(4):
          image = next(aug_iter)[0].astype('uint8')
@@ -128,41 +148,6 @@ for i in ['CC','D','Y']:
          ax[i].imshow(image, cmap='Blues')
          ax[i].axis('off')
 #%%
-data_augmentation = tf.keras.Sequential([
-    tf.keras.layers.experimental.preprocessing.RandomRotation(0.1, 
-                                                              input_shape=(32, 32, 3)),
-    tf.keras.layers.experimental.preprocessing.RandomFlip("horizontal"),
-    ])
-METRIC_KAPPA = tfa.metrics.CohenKappa(num_classes=2, name='kappa')
-#%%
-model_pfe = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(1, 1, 2560)),# flatten before fully connected part
-    tf.keras.layers.Dense(32, activation='tanh'), 
-    tf.keras.layers.Dense(64, activation='tanh'), 
-    tf.keras.layers.Dense(1, activation='sigmoid')
-    ])
-model_pfe.compile(
-    optimizer='adam',
-    loss='binary_crossentropy',
-    metrics=['accuracy',METRIC_KAPPA],
-    )
-model_pfe.summary()
-
-#%%
-base_model = tf.keras.applications.EfficientNetB7(
-    input_shape=(32, 32, 3), # refers to the shape we transfer from
-    include_top=False, # cut off the head
-    weights='imagenet', # pretrained on the ImageNet data
-)
-base_model.trainable = False # freeze the base model to not train it 
-                             # not needed for pure feature extraction,
-                             # but needed for the feature extraction 
-                             # with multiple passes (as it is implemented here)
-#%%
-# Create new features
-FE_train = base_model.predict(train_gen_CC) # Note the rescaling
-FE_val = base_model.predict(val_gen_CC) # Note the rescaling
-#%%
 def plot_hist(hist):
     plt.plot(hist.history["accuracy"])
     plt.plot(hist.history["val_accuracy"])
@@ -171,34 +156,42 @@ def plot_hist(hist):
     plt.xlabel("epoch")
     plt.legend(["train", "validation"], loc="upper left")
     plt.show()
+#%%    
+def plot_loss(hist):
+    plt.plot(hist.history["loss"])
+    plt.plot(hist.history["val_loss"])
+    plt.title("model loss")
+    plt.ylabel("loss")
+    plt.xlabel("epoch")
+    plt.legend(["train", "validation"], loc="upper left")
+    plt.show()
 #%%
-img_augmentation = Sequential(
+data_augmentation = Sequential(
     [
-        tf.keras.layers.RandomRotation(factor=0.15),
-        tf.keras.layers.RandomTranslation(height_factor=0.1, width_factor=0.1),
-        tf.keras.layers.RandomFlip(),
-        tf.keras.layers.RandomContrast(factor=0.1),
+        tf.keras.layers.experimental.preprocessing.RandomRotation(factor=0.15, input_shape=(32, 62, 3)),
+        tf.keras.layers.experimental.preprocessing.RandomTranslation(height_factor=0.1, width_factor=0.1),
+        tf.keras.layers.experimental.preprocessing.RandomFlip(),
+        tf.keras.layers.experimental.preprocessing.RandomContrast(factor=0.1),
     ],
 )
-#%%
-model_reloaded = tf.keras.models.load_model('saved_model.pb')
-model_reloaded.summary()
+METRIC_KAPPA = tfa.metrics.CohenKappa(num_classes=2, name='kappa')
+
 #%%
 def build_model():
-    # create the base pre-trained model
-    model = tf.keras.applications.efficientnet.EfficientNetB7(
-        weights='imagenet', 
-        input_shape=(32, 62, 3),
-        include_top=False)
-
-    # Freeze the pretrained weights
+    inputs = tf.keras.layers.Input(shape=(32, 62, 3))
+    x = data_augmentation(inputs)
+    model = tf.keras.applications.efficientnet.EfficientNetB0(
+        include_top=False, 
+        input_tensor=x, 
+        weights="imagenet")
+    
     model.trainable = False
 
     # Rebuild top
     x = model.output
     x = tf.keras.layers.Flatten(input_shape=(1, 1, 2560))(x)
-    x = tf.keras.layers.Dense(32, activation='tanh')(x)
-    x = tf.keras.layers.Dense(64, activation='tanh')(x)
+    x = tf.keras.layers.Dense(32, activation='relu')(x)
+    x = tf.keras.layers.Dense(64, activation='relu')(x)
     outputs = tf.keras.layers.Dense(1, activation="sigmoid")(x)
 
     # Compile
@@ -209,19 +202,21 @@ def build_model():
         metrics=['accuracy',METRIC_KAPPA]
     )
     return model
+
 #%%
-strategy = tf.distribute.MirroredStrategy()
-#%%
-model1 = build_model()
+model = build_model()
 
 epochs = 20  # @param {type: "slider", min:8, max:80}
 hist = model.fit(train_gen_CC, validation_data=val_gen_CC, epochs=epochs, verbose=1)
-#plot_hist(hist)
-
+plot_hist(hist)
+#%%
+KERAS_MODEL_NAME = "FWL_Model.hdf5"
+#model.save('exercise-nn-saveload')
+keras.models.save_model(model, KERAS_MODEL_NAME)
 #%%
 def unfreeze_model(model):
     # We unfreeze the top 20 layers while leaving BatchNorm layers frozen
-    for layer in model.layers[-20:]:
+    for layer in model.layers[-2000:]:
         if not isinstance(layer, tf.keras.layers.BatchNormalization):
             layer.trainable = True
 
@@ -230,284 +225,164 @@ def unfreeze_model(model):
         optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy',METRIC_KAPPA]
     )
 
-
+#%%
 unfreeze_model(model)
 
-tensorboard_callback = tf.keras.callbacks.TensorBoard('logs_exercise_nn_saveload/', histogram_freq=1)
-
-epochs = 10  # @param {type: "slider", min:8, max:50}
-hist = model.fit(train_gen_CC, validation_data=val_gen_CC, epochs=epochs, verbose=1, callbacks=[tensorboard_callback])
+epochs = 10  
+hist = model.fit(train_gen_CC, validation_data=val_gen_CC, epochs=epochs, verbose=1)
 plot_hist(hist)
-
+joblib.dump(model, 'data/model_FWL.pkl')
+model.save('model_FW')
+model2 = tf.keras.models.load_model('logs_exercise_nn_saveload')
+#%%
+plot_loss(hist)
+y_hat = model.predict(test_gen_CC)
+y_hat_bin = np.where(y_hat > 0.5, 1, 0)
 #%%
 model.save('logs_exercise_nn_saveload/model_FWL')
 #%%
 model.fit(train_gen_CC, validation_data=val_gen_CC, epochs=5, verbose=1, callbacks=[tensorboard_callback])
 model.save('logs_exercise_nn_saveload/model_FWL')
-#%%
-# create the base pre-trained model
-base_model = tf.keras.applications.efficientnet.EfficientNetB7(
-    weights='imagenet', 
-    input_shape=(32, 32, 3),
-    include_top=False)
 
-# add a global spatial average pooling layer
-x = base_model.output
-x = tf.keras.layers.Flatten(input_shape=(1, 1, 2560))(x)
-# let's add a fully-connected layer
-x = Dense(1024, activation='relu')(x)
-# and a logistic layer -- let's say we have 200 classes
-predictions = Dense(1, activation='sigmoid')(x)
-
-# this is the model we will train
-model = tf.keras.Model(inputs=base_model.input, outputs=predictions)
-
-# first: train only the top layers (which were randomly initialized)
-# i.e. freeze all convolutional  layers
-for layer in base_model.layers:
-    layer.trainable = False
-
-# compile the model (should be done *after* setting layers to non-trainable)
-model.compile(optimizer='adam',   
-              loss='binary_crossentropy',
-              metrics=['accuracy',METRIC_KAPPA],)
-
-# train the model on the new data for a few epochs
-model.fit(train_gen_CC, validation_data=val_gen_CC, epochs=5, verbose=1)
-#%%
-# at this point, the top layers are well trained and we can start fine-tuning
-# convolutional layers from inception V3. We will freeze the bottom N layers
-# and train the remaining top layers.
-
-# let's visualize layer names and layer indices to see how many layers
-# we should freeze:
-for i, layer in enumerate(base_model.layers):
-   print(i, layer.name)
-#%%
-# we chose to train the top 2 inception blocks, i.e. we will freeze
-# the first 249 layers and unfreeze the rest:
-for layer in model.layers[:249]:
-   layer.trainable = False
-for layer in model.layers[249:]:
-   layer.trainable = True
-
-# we need to recompile the model for these modifications to take effect
-model.compile(
-    optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), # use a low learning rate
-    loss='binary_crossentropy',
-    metrics=['accuracy',METRIC_KAPPA],
-    )
-
-# we train our model again (this time fine-tuning the top 2 inception blocks
-# alongside the top Dense layers
-tensorboard_callback = tf.keras.callbacks.TensorBoard('logs_exercise_nn_saveload/', histogram_freq=1)
-
-model.fit(train_gen_CC, validation_data=val_gen_CC, epochs=5, verbose=1, callbacks=[tensorboard_callback])
-model.save('logs_exercise_nn_saveload/model_FWL')
-
-
-
-#%%
-model_pfe = tf.keras.models.Sequential([
-    tf.keras.layers.Flatten(input_shape=(1, 1, 2560)),# flatten before fully connected part
-    tf.keras.layers.Dense(64, activation='relu'),
-    tf.keras.layers.Dense(1, activation='sigmoid'),
-    ])
-model_pfe.compile(
-    optimizer='adam',
-    loss='binary_crossentropy',
-    metrics=['accuracy',METRIC_KAPPA],
-    )
-model_pfe.summary()
-model_pfe.fit(train_gen_CC, validation_data=val_gen_CC, epochs=5, verbose=1) # train for few epocs 
-#%%
-head = tf.keras.models.clone_model(model_pfe)
-head.set_weights(model_pfe.get_weights())
-
-base_model = tf.keras.applications.efficientnet.EfficientNetB7(
-    input_shape=(32, 32, 3), # refers to the shape we transfer from
-    include_top=False,       # cut off the head
-    weights='imagenet',      # pretrained on the ImageNet data
-)
-base_model.training = False # to disable updating of means and 
-                               # variances in batch norm layers
-                               # This is in some cases very important, 
-                               # but in this case it would still 
-                               # work fine if we did not do it
-
-for layer in base_model.layers[-20:]:
-    if isinstance(layer, tf.keras.layers.BatchNormalization):
-        layer.trainable = False             
-  
-model = tf.keras.models.Sequential([
-    data_augmentation, 
-    base_model, 
-    head, 
-])
-
-model.compile(
-    optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), # use a low learning rate
-    loss='binary_crossentropy',
-    metrics=['accuracy',METRIC_KAPPA],
-    )
-model.summary()
-#%%
-tensorboard_callback = tf.keras.callbacks.TensorBoard('logs_exercise_nn_saveload/', histogram_freq=1)
-
-model.fit(train_gen_CC, validation_data=val_gen_CC, epochs=10, verbose=1, callbacks=[tensorboard_callback])
-model.save('logs_exercise_nn_saveload/model_FWL')
-#%%
-model = tf.keras.models.load_model('exercise-nn-saveload')
-#%%
-head = tf.keras.models.clone_model(model_pfe)
-head.set_weights(model_pfe.get_weights())
-
-base_model = tf.keras.applications.efficientnet.EfficientNetB7(
-    input_shape=(32, 32, 3), # refers to the shape we transfer from
-    include_top=False,       # cut off the head
-    weights='imagenet',      # pretrained on the ImageNet data
-)
-base_model.training = False # to disable updating of means and 
-                               # variances in batch norm layers
-                               # This is in some cases very important, 
-                               # but in this case it would still 
-                               # work fine if we did not do it
-
-# Unfreeze the base_model. Note that it keeps running in inference mode
-# since we passed `training=False` when calling it. This means that
-# the batchnorm layers will not update their batch statistics.
-# base_model.trainable = True  
-
-for layer in base_model.layers[:200]: # layers after number 100 
-    layer.trainable = False  
-  
-model = tf.keras.models.Sequential([
-    data_augmentation, # can still use data augmentation now
-    base_model, # the pre-trained part
-    head, # the classifer we trained using feature extraction
-])
-
-model.compile(
-    optimizer=tf.keras.optimizers.Adam(learning_rate=1e-5), # use a low learning rate
-    loss='binary_crossentropy',
-    metrics=['accuracy',METRIC_KAPPA],
-    )
-model.summary()
-#%%
-model.summary()
-#%%
-history_ft = model.fit(train_gen_CC, validation_data=val_gen_CC, epochs=5, verbose=1)
-#%%
-base_model = tf.keras.applications.efficientnet.EfficientNetB7(
-    weights="imagenet",  # Load weights pre-trained on ImageNet.
-    input_shape=(32, 32, 3),
-    include_top=False,
-)  # Do not include the ImageNet classifier at the top.
-
-# Freeze the base_model
-base_model.trainable = False
-
-# Create new model on top
-inputs = tf.keras.Input(shape=(32, 32, 3))
-x = data_augmentation(inputs)  # Apply random data augmentation
-
-# The base model contains batchnorm layers. We want to keep them in inference mode
-# when we unfreeze the base model for fine-tuning, so we make sure that the
-# base_model is running in inference mode here.
-x = base_model(x, training=False)
-x = tf.keras.layers.Flatten(input_shape=(1, 1, 2560))(x)# flatten before fully connected part
-x = tf.keras.layers.Dense(32, activation='tanh')(x)
-x = tf.keras.layers.Dense(64, activation='tanh')(x) 
-outputs = tf.keras.layers.Dense(1, activation='sigmoid')(x)
-model = tf.keras.Model(inputs, outputs)
-
-model.summary()
-#%%
-model.compile(
-    optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001), # use a low learning rate
-    loss='binary_crossentropy',
-    metrics=['accuracy',METRIC_KAPPA],
-    )
-#%%
-epochs = 20
-model.fit(train_gen_CC, validation_data=val_gen_CC, epochs=epochs, verbose=1)
-#%%
-# Unfreeze the base_model. Note that it keeps running in inference mode
-# since we passed `training=False` when calling it. This means that
-# the batchnorm layers will not update their batch statistics.
-# This prevents the batchnorm layers from undoing all the training
-# we've done so far.
-base_model.trainable = True
-model.summary()
-
-model.compile(
-    optimizer=tf.keras.optimizers.Adam(1e-5),  # Low learning rate
-    loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
-    metrics=['accuracy',METRIC_KAPPA],
-)
-
-epochs = 10
-model.fit(train_gen_CC, validation_data=val_gen_CC, epochs=epochs, verbose=1)
 #%% Excited layers
-example_image = train_images[0:1].copy()
-plt.imshow(example_image[0])
+import PIL
+from tensorflow.keras.preprocessing.image import img_to_array
+from numpy import expand_dims
+img = PIL.Image.open('data/DIDA_2/46.jpg')
+img = img_to_array(img)
+img = expand_dims(img, axis=0)
 plt.figure(figsize=(10, 10))
-for i in range(9):
-    ax = plt.subplot(3, 3, i + 1); 
+for i in range(16):
+    ax = plt.subplot(4, 4, i + 1); 
     plt.axis('off'); 
-    plt.imshow(model.get_layer('conv2d')(example_image)[0, :, :, i])
-#%% Heatmap
-def get_heatmap(category, start_image):
-    frog_output     = model.get_layer('dense_1').output # output layer
-    last_conv_layer = model.get_layer('conv2d_2').output # deep convolution 
-                                                         # we could use something else
-    submodel = tf.keras.models.Model([model.inputs], [frog_output, last_conv_layer])
-
-    input_img_data = start_image.copy()
-    input_img_data = tf.Variable(tf.cast(input_img_data, tf.float32))
-
-    with tf.GradientTape() as tape:
-        outputs_class, outputs_conv = submodel(input_img_data)
-        loss_value                  = tf.reduce_mean(outputs_class[:, category])
-
-    grads = tape.gradient(loss_value, outputs_conv)
-
-    cast_outputs_conv = tf.cast(outputs_conv > 0, "float32")
-    cast_grads        = tf.cast(grads > 0, "float32")
-    guided_grads      = cast_outputs_conv * cast_grads * grads
-    outputs_conv      = outputs_conv[0]
-    guided_grads      = guided_grads[0]
+    plt.imshow(model.get_layer(last_conv_layer_name).output)(img)[0, :, :, i])
+    #model.get_layer(last_conv_layer_name).output
     
-    weights           = tf.reduce_mean(guided_grads, axis=(0, 1))
-    cam               = tf.reduce_sum(tf.multiply(weights, outputs_conv), axis=-1)
     
-    return cam
 #%%
+from skimage import io
 from PIL import Image
-cmap = plt.get_cmap('jet')
 
-def create_heatmap(idx):
-    category, image = train_labels[idx], train_images[idx:(idx + 1)]
+img = io.imread('data/DIDA_2/46.jpg')
+display(img)
+img = Image.open("data/DIDA_2/46.jpg")
+#%% 
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
 
-    heatmap = get_heatmap(category, image)
-    heatmap = heatmap.numpy()
-    heatmap = Image.fromarray(heatmap)
-    heatmap = heatmap.resize((32, 32), Image.ANTIALIAS) # upscale
-    heatmap = np.array(heatmap) # back to numpy array
-    heatmap = (heatmap / heatmap.max()) # to [0, 1]    
-    heatmap = cmap(heatmap)
-    heatmap = np.delete(heatmap, 3, 2)
-
-    overlayed_heatmap = 0.6 * image[0] + 0.4 * heatmap
-    
-    return image[0], heatmap, overlayed_heatmap
-
-def plot_heatmap():
-    plt.figure(figsize=(10, 10))
-    for i in range(3):
-        images = create_heatmap(i)
-        for j in range(3):
-            ax = plt.subplot(3, 3, i * 3 + 1 + j); plt.axis('off'); plt.imshow(images[j])
-    plt.show()
+# Display
+from IPython.display import Image, display
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 #%%
-plot_heatmap()
+model_builder = keras.applications.xception.Xception
+img_size = (32, 62)
+preprocess_input = keras.applications.xception.preprocess_input
+decode_predictions = keras.applications.xception.decode_predictions
+
+last_conv_layer_name = "block14_sepconv2_act"
+
+# The local path to our target image
+imgage = Image.open("data/DIDA_2/46.jpg")
+
+display(imgage)
+#%%
+def get_img_array(img_path):
+    # `img` is a PIL image of size 299x299
+    img = img_path
+    # `array` is a float32 Numpy array of shape (299, 299, 3)
+    array = keras.preprocessing.image.img_to_array(img)
+    # We add a dimension to transform our array into a "batch"
+    # of size (1, 299, 299, 3)
+    array = np.expand_dims(array, axis=0)
+    return array
+
+def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None):
+    # First, we create a model that maps the input image to the activations
+    # of the last conv layer as well as the output predictions
+    grad_model = tf.keras.models.Model(
+        [model.inputs], [model.get_layer(last_conv_layer_name).output, model.output]
+    )
+
+    # Then, we compute the gradient of the top predicted class for our input image
+    # with respect to the activations of the last conv layer
+    with tf.GradientTape() as tape:
+        last_conv_layer_output, preds = grad_model(img_array)
+        if pred_index is None:
+            pred_index = tf.argmax(preds[0])
+        class_channel = preds[:, pred_index]
+
+    # This is the gradient of the output neuron (top predicted or chosen)
+    # with regard to the output feature map of the last conv layer
+    grads = tape.gradient(class_channel, last_conv_layer_output)
+
+    # This is a vector where each entry is the mean intensity of the gradient
+    # over a specific feature map channel
+    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+
+    # We multiply each channel in the feature map array
+    # by "how important this channel is" with regard to the top predicted class
+    # then sum all the channels to obtain the heatmap class activation
+    last_conv_layer_output = last_conv_layer_output[0]
+    heatmap = last_conv_layer_output @ pooled_grads[..., tf.newaxis]
+    heatmap = tf.squeeze(heatmap)
+
+    # For visualization purpose, we will also normalize the heatmap between 0 & 1
+    heatmap = tf.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
+    return heatmap.numpy()
+#%%
+# Prepare image
+img_array = preprocess_input(get_img_array(img_path))
+
+# Make model
+model1 = model
+
+# Remove last layer
+#model.layers[-1].activation = None
+
+# Print what the top predicted class is
+preds = model1.predict(img_array)
+print("Predicted:", decode_predictions(preds, top=1)[0])
+
+# Generate class activation heatmap
+heatmap = make_gradcam_heatmap(img_array, model, last_conv_layer_name)
+
+# Display heatmap
+plt.matshow(heatmap)
+plt.show()
+
+#%%
+#%%
+def save_and_display_gradcam(img_path, heatmap, cam_path="cam.jpg", alpha=0.4):
+    # Load the original image
+    img = keras.preprocessing.image.load_img(img_path)
+    img = keras.preprocessing.image.img_to_array(img)
+
+    # Rescale heatmap to a range 0-255
+    heatmap = np.uint8(255 * heatmap)
+
+    # Use jet colormap to colorize heatmap
+    jet = cm.get_cmap("jet")
+
+    # Use RGB values of the colormap
+    jet_colors = jet(np.arange(256))[:, :3]
+    jet_heatmap = jet_colors[heatmap]
+
+    # Create an image with RGB colorized heatmap
+    jet_heatmap = keras.preprocessing.image.array_to_img(jet_heatmap)
+    jet_heatmap = jet_heatmap.resize((img.shape[1], img.shape[0]))
+    jet_heatmap = keras.preprocessing.image.img_to_array(jet_heatmap)
+
+    # Superimpose the heatmap on original image
+    superimposed_img = jet_heatmap * alpha + img
+    superimposed_img = keras.preprocessing.image.array_to_img(superimposed_img)
+
+    # Save the superimposed image
+    superimposed_img.save(cam_path)
+
+    # Display Grad CAM
+    display(Image(cam_path))
+
+
+save_and_display_gradcam(img_path, heatmap)
