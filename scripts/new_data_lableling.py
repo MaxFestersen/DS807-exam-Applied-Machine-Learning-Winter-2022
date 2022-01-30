@@ -5,6 +5,7 @@ Moving random subset of new images
 
 #%% Importing libraries
 import numpy as np
+from numpy import save
 import os
 import matplotlib.pyplot as plt
 import random
@@ -14,6 +15,7 @@ import PIL.ImageOps
 from PIL.ImageFilter import MedianFilter
 import seaborn as sns
 import shutil
+from skimage.io import imread
 
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
@@ -95,3 +97,13 @@ for path in df_n_labels['path']:
     image = PIL.ImageOps.pad(image, (x_resize, y_resize)) # up/down scales while keeping original aspect ratio
     image.save(path, quality=100, subsampling=0) # saving image in highest quality
 
+#%% Generate vector
+flat_data_arr=[] #input array
+path = "data/newsplit/"
+for img in os.listdir(path):
+    img_array=imread(os.path.join(path,img))
+    flat_data_arr.append(img_array.flatten())
+
+X_unseen = np.array(flat_data_arr)
+
+save('data/X_unseen.npy', X_unseen)
