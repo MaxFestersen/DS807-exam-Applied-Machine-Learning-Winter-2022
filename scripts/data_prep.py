@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Data preparation
+@author: Alexander & Max
 """
 
 #%% Importing libraries
@@ -17,7 +18,7 @@ import PIL.ImageOps
 from PIL.ImageFilter import MedianFilter
 from skimage.io import imread
 
-# Set path to parrent location of current file
+# Set path to parrent location of current file - Max
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
@@ -121,7 +122,7 @@ splitfolders.ratio("data/CC/", output="data/split/CC/", seed=1337, ratio=(0.8, 0
 splitfolders.ratio("data/D/", output="data/split/D/", seed=1337, ratio=(0.8, 0.1, 0.1))
 splitfolders.ratio("data/Y/", output="data/split/Y/", seed=1337, ratio=(0.8, 0.1, 0.1))
 
-#%% Generate test, train and validation vectores
+#%% Generate test, train and validation vectores - Max
 def splitfolder_to_array(Categories, datadir):
     flat_data_arr=[] #input array
     target_arr=[] #output array
@@ -159,7 +160,7 @@ print(X_train_Y.shape, X_test_Y.shape, y_train_Y.shape, y_test_Y.shape, X_val_Y.
 #        b = f'{i}{j}'
 #        save(a,b)
 
-#from numpy import asarray
+#from numpy import asarray - Max
 #CC
 save('data/X_train_CC.npy', X_train_CC)
 save('data/y_train_CC.npy', y_train_CC)
@@ -182,7 +183,7 @@ save('data/y_test_Y.npy', y_test_Y)
 save('data/X_val_Y.npy', X_val_Y)
 save('data/y_val_Y.npy', y_val_Y)
 
-#%% Find common training images
+#%% Find common training images - Max
 #%% Find images and names in folders
 files_all = []
 files_by_category = {}
@@ -207,5 +208,5 @@ for path in paths:
         else:
             files_by_subcategory[cat_string] = filenames
 
-#%% Find matches
+#%% Find matches - Max
 print(set(files_by_category["CC"]) & set(files_by_category["D"]) & set(files_by_category["Y"]))
