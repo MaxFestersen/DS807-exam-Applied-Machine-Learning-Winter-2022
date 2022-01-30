@@ -8,12 +8,13 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import random
-import seaborn as sns
-import shutil
 import pandas as pd
 from PIL import Image
 import PIL.ImageOps
 from PIL.ImageFilter import MedianFilter
+import seaborn as sns
+import shutil
+
 # Set path to parrent location of current file
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
@@ -93,3 +94,4 @@ for path in df_n_labels['path']:
     image = image.crop(bbox) # cropping image to that bounding box
     image = PIL.ImageOps.pad(image, (x_resize, y_resize)) # up/down scales while keeping original aspect ratio
     image.save(path, quality=100, subsampling=0) # saving image in highest quality
+
