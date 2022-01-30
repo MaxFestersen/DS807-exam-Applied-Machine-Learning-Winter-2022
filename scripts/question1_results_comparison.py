@@ -101,6 +101,26 @@ def add_model_score(name, model, df_scores, svm_multi_class): # ROC requires mul
         df_scores.to_csv("scores/nondeep.csv", index=False)
     return(df_scores)
 
+def add_pred_score(name, pred, df_scores): # ROC requires multiclass parameters.
+    X_test_pred = pred
+
+    # Obtain and check accuracy on test data
+    X_test_acc = accuracy_score(X_test_pred, y_test)
+    # X_test_acc = balanced_accuracy_score(X_test_pred, y_test, sample_weight = X_train_weights_by_class)
+    X_test_kappa = cohen_kappa_score(y_test, X_test_pred)
+    X_test_roc = roc_auc_score(y_test, X_test_pred)
+    print(f'{name} achieved on test-set: {round(X_test_acc * 100, 1)}% accuracy, a kappa score of {round(X_test_kappa,2)} & roc score of {round(X_test_roc,2)}.')
+    if df_scores.loc[df_scores['Method_Category'] == f"{name} test"].empty:
+        print(f"Adding {name} test-set.")
+        new_row = {'Method_Category': f"{name} test", 'Accuracy': X_test_acc, 'Kappa': X_test_kappa, 'Roc': X_test_roc}
+        df_scores = df_scores.append(new_row, ignore_index = True)
+        df_scores.to_csv("scores/nondeep.csv", index=False)
+    else:
+        print(f"Updating {name} test-set.")
+        df_scores.loc[df_scores['Method_Category'] == f"{name} test"] = f"{name} test", X_test_acc, X_test_kappa, X_test_roc
+        df_scores.to_csv("scores/nondeep.csv", index=False)
+    
+
 # ------------------------------- CC -----------------------------------------
 #%% Load numpy array from npy file - CC
 X_train = load('data/X_train_CC.npy')
@@ -136,7 +156,12 @@ boosting_CC = joblib.load('data/GB_CC_roc_auc.pkl')
 
 df_scores = add_model_score("Boosting CC", boosting_CC, df_scores, 1)
 
-# ------------------------------- D -----------------------------------------
+# #%% CNN CC -------------------------------------------------------------------
+# CNN_CC = load("predictions/y_hat_CC.npy")
+
+# df_scores = add_pred_score("CNN CC", CNN_CC, df_scores)
+
+# ------------------------------- D ------------------------------------------
 #%% Load numpy array from npy file - D
 X_train = load('data/X_train_D.npy')
 y_train = load('data/y_train_D.npy')
