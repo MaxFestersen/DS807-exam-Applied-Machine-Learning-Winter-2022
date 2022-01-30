@@ -89,6 +89,7 @@ METRIC_PRC = tf.keras.metrics.AUC(name='prc', curve='PR')
 METRIC_ROC = tf.keras.metrics.AUC(name='ROC', curve='ROC')
 METRIC_ACC = 'accuracy'
 METRIC_KAPPA = tfa.metrics.CohenKappa(num_classes=2, name='kappa')
+
 VAL_ACC = hp.Metric(
     "epoch_accuracy",
     group="validation",
@@ -281,7 +282,33 @@ reduceLR = ReduceLROnPlateau(
     factor=0.2,
     patience=4) # reducing learning rate when val_loss doesn't improve for 3 epochs
 
-#%% Training
+#%% Training no regularization
+# best parameters
+params = {'CONV_LAYER': 4, 
+          'NUM_FILTS': 16, 
+          'DENSE_LAYER': 2, 
+          'NUM_UNITS': 32, 
+          'ACTIVATION': 'tanh', 
+          'DROPOUT': 0.0}
+
+
+modelCC = final_model(params)
+
+hist = modelCC.fit(train_gen,
+            steps_per_epoch=STEP_SIZE_TRAIN,
+            validation_data=val_gen,
+            validation_steps=STEP_SIZE_VALID,
+            epochs=100,
+            callbacks=[tensorboard_callback, modelCheckpoint, earlyStop])
+
+#%% Evaluation
+modelCC.load_weights(checkpoint_filepath)
+modelCC.evaluate(test_gen) #accuracy 0.9925
+
+#%%
+modelCC.save('models/modelCC')
+
+#%% Training regularization
 # best parameters
 params = {'CONV_LAYER': 4, 
           'NUM_FILTS': 16, 
@@ -298,9 +325,9 @@ class_weights = class_weight.compute_class_weight(
 
 train_class_weights = dict(enumerate(class_weights))
 
-modelCC = final_model(params)
+modelCC_reg = final_model(params)
 
-hist = modelCC.fit(train_gen,
+hist_reg = modelCC_reg.fit(train_gen,
             steps_per_epoch=STEP_SIZE_TRAIN,
             validation_data=val_gen,
             validation_steps=STEP_SIZE_VALID,
@@ -309,13 +336,13 @@ hist = modelCC.fit(train_gen,
             class_weight=train_class_weights)
 
 #%% Evaluation
-modelCC.load_weights(checkpoint_filepath)
-modelCC.evaluate(test_gen) #accuracy 0.9933
+modelCC_reg.load_weights(checkpoint_filepath)
+modelCC_reg.evaluate(test_gen) #accuracy 0.9925
 
 #%%
-modelCC.save('models/modelCC')
+modelCC.save('models/modelCC_reg')
 
-#%%
+#%% Training regularization + data augmentation
 
 modelCC_aug = final_model(params)
 
@@ -329,13 +356,16 @@ hist_aug = modelCC.fit(train_gen_aug,
 
 #%% Evaluation
 modelCC_aug.load_weights(checkpoint_filepath)
-modelCC_aug.evaluate(test_gen) #accuracy 0.9933
+modelCC_aug.evaluate(test_gen) #accuracy 0.9908
 
 #%%
 modelCC_aug.save('models/modelCC_aug')
 
 #%%
 modelCC = tf.keras.models.load_model('models/modelCC')
+modelCC.evaluate(test_gen)
+
+modelCC = tf.keras.models.load_model('models/modelCC_reg')
 modelCC.evaluate(test_gen)
 
 modelCC_aug = tf.keras.models.load_model('models/modelCC_aug')
@@ -364,13 +394,17 @@ def plot_hist(hist, stop_metric, metric, path):
     plt.savefig(path, dpi=300)
     plt.show()
 
-plot_hist(hist, 'val_accuracy', 'accuracy', 'plots/modelCC_acc.png')
-plot_hist(hist, 'val_accuracy', 'prc', 'plots/modelCC_prc.png')
-plot_hist(hist, 'val_accuracy', 'loss', 'plots/modelCC_loss.png')
-plot_hist(hist, 'val_accuracy', 'kappa', 'plots/modelCC_kappa.png')
-    
-plot_hist(hist_aug, 'val_accuracy', 'accuracy', 'plots/modelCC_acc_aug.png')
-plot_hist(hist_aug, 'val_accuracy', 'prc', 'plots/modelCC_prc_aug.png')
-plot_hist(hist_aug, 'val_accuracy', 'loss', 'plots/modelCC_loss_aug.png')
-plot_hist(hist_aug, 'val_accuracy', 'kappa', 'plots/modelCC_kappa_aug.png')
+plot_hist(hist, 'val_kappa', 'accuracy', 'plots/no_reg/modelCC_acc.png')
+plot_hist(hist, 'val_kappa', 'prc', 'plots/no_reg/modelCC_prc.png')
+plot_hist(hist, 'val_kappa', 'loss', 'plots/no_reg/modelCC_loss.png')
+plot_hist(hist, 'val_kappa', 'kappa', 'plots/no_reg/modelCC_kappa.png')
 
+plot_hist(hist_reg, 'val_kappa', 'accuracy', 'plots/reg/modelCC_acc_reg.png')
+plot_hist(hist_reg, 'val_kappa', 'prc', 'plots/reg/modelCC_prc_reg.png')
+plot_hist(hist_reg, 'val_kappa', 'loss', 'plots/reg/modelCC_loss_reg.png')
+plot_hist(hist_reg, 'val_kappa', 'kappa', 'plots/reg/modelCC_kappa_reg.png')
+    
+plot_hist(hist_aug, 'val_kappa', 'accuracy', 'plots/aug/modelCC_acc_aug.png')
+plot_hist(hist_aug, 'val_kappa', 'prc', 'plots/aug/modelCC_prc_aug.png')
+plot_hist(hist_aug, 'val_kappa', 'loss', 'plots/aug/modelCC_loss_aug.png')
+plot_hist(hist_aug, 'val_kappa', 'kappa', 'plots/aug/modelCC_kappa_aug.png')
