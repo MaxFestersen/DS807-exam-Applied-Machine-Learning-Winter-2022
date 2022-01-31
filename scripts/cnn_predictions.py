@@ -66,9 +66,29 @@ y_hat_CC = np.where(y_hat_CC > 0.5, 1, 0).flatten()
 y_hat_D = np.argmax(y_hat_D, axis=1).flatten()
 y_hat_Y = np.argmax(y_hat_Y, axis=1).flatten()
 
-y_hat_D[y_hat_D > 4] = 10
+# Due to a switch up in the labels from training to test set predicted labels has to be reassigned
+y_hat_Y = np.select([y_hat_Y == 0,
+                     y_hat_Y == 1,
+                     y_hat_Y == 2, 
+                     y_hat_Y== 3, 
+                     y_hat_Y == 4, 
+                     y_hat_Y == 5, 
+                     y_hat_Y == 6,
+                     y_hat_Y == 7,
+                     y_hat_Y == 8,
+                     y_hat_Y == 9,
+                     y_hat_Y== 10], 
+                    [0, 1, 10, 2, 3, 4, 5, 6, 7, 8, 9])
 
-df['CC_pred'] = y_hat_CC
+y_hat_D = np.select([y_hat_D == 0,
+                     y_hat_D == 1,
+                     y_hat_D == 2,
+                     y_hat_D == 3,
+                     y_hat_D == 4,
+                     y_hat_D == 5],
+                    [0,1,10,3,2,4])
+
+df['CC_pred'] = y_hat_CC¨
 df['D_pred'] = y_hat_D
 df['Y_pred'] = y_hat_Y
 
