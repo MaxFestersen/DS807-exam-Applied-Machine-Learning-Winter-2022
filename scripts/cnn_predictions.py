@@ -10,9 +10,16 @@ import os
 import numpy as np
 import tensorflow as tf
 import pandas as pd
+import tensorflow_addons as tfa
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import seaborn as sns
 import matplotlib.pyplot as plt
+
+# Set path to parrent location of current file
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+os.chdir("../")
 
 #%%
 df = pd.read_csv('labels/Digit_String_2_labels_formatted.csv')
