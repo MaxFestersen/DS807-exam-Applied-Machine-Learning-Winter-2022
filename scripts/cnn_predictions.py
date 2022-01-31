@@ -88,7 +88,7 @@ y_hat_D = np.select([y_hat_D == 0,
                      y_hat_D == 5],
                     [0,1,10,3,2,4])
 
-df['CC_pred'] = y_hat_CC¨
+df['CC_pred'] = y_hat_CC
 df['D_pred'] = y_hat_D
 df['Y_pred'] = y_hat_Y
 
